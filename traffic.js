@@ -71,6 +71,7 @@ export default (moment) => {
   }
 
   const sumTraffic = (dot, ratio = 1) => dot ? (dot.seo + dot.smm + dot.mail) * ratio + dot.market + dot.ref + dot.retention : 0
+  const sumTrafficWRetention = (dot, ratio = 1) => dot ? sumTraffic(dot, ratio) - dot.retention : 0
 
   const getTrafficGraphData = (dots, period = 'today') => {
     if (!dots || !dots.length) return []
@@ -103,11 +104,18 @@ export default (moment) => {
         let intervalTraffic = 0
         if (acc.prevDot && inTimeInterval) {
           const dotPeriod = (curDot.ts - Math.max(acc.prevDot.ts, timeStart)) / 60 / 60
-          const trafSpeed = sumTraffic(acc.prevDot, calcTraffRatio(calcGraphX(curDot.ts)))
+          const dailyRatio = calcTraffRatio(calcGraphX(curDot.ts))
+          const trafSpeed = sumTraffic(acc.prevDot, dailyRatio)
           const limit = curDot.limit || Infinity
           const trimmedTrafSpeed = Math.min(trafSpeed, limit)
           const processedTrafSpeed = trafficProcess 
-            ? trafficProcess(curDot.ts, trimmedTrafSpeed) 
+            ? trafficProcess({ 
+              timeStamp: curDot.ts, 
+              trafSpeed: trimmedTrafSpeed, 
+              dailyRatio, 
+              dot: acc.prevDot, 
+              limit,
+            }) 
             : trimmedTrafSpeed
           intervalTraffic = processedTrafSpeed * dotPeriod
         }
@@ -189,6 +197,7 @@ export default (moment) => {
     cleanTraffic,
     getTimeStamps,
     calcGraphX,
-    sumTraffic
+    sumTraffic,
+    sumTrafficWRetention
   };
 }
