@@ -1,5 +1,6 @@
-import {
-  moment,
+import lib from './index';
+import moment from 'moment';
+const {
   simplify,
   cleanTraffic,
   calcGraphX,
@@ -10,7 +11,8 @@ import {
   getTrafficGraphData,
   getTrafficSpeed,
   getTrafficChange,
-} from './'
+} = lib(moment);
+
 import { range } from 'ramda'
 
 const startDay = moment.unix(0)
@@ -20,6 +22,7 @@ const startDay = moment.unix(0)
   .add(1, 'hours')
   .add(5, 'days')
   .unix()
+
 const endDate = moment.unix(startDay).add(1, 'day').unix()
 moment.now = jest.fn(() => (startDay + 1 * 60 * 60) * 1000)
 
