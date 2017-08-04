@@ -85,6 +85,10 @@ exports.default = function (moment) {
     var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
     return dot ? (dot.seo + dot.smm + dot.mail) * ratio + dot.market + dot.ref + dot.retention : 0;
   };
+  var sumTrafficWRetention = function sumTrafficWRetention(dot) {
+    var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+    return dot ? sumTraffic(dot, ratio) - dot.retention : 0;
+  };
 
   var getTrafficGraphData = function getTrafficGraphData(dots) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
@@ -126,10 +130,17 @@ exports.default = function (moment) {
       var intervalTraffic = 0;
       if (acc.prevDot && inTimeInterval) {
         var dotPeriod = (curDot.ts - Math.max(acc.prevDot.ts, timeStart)) / 60 / 60;
-        var trafSpeed = sumTraffic(acc.prevDot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(curDot.ts)));
+        var dailyRatio = (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(curDot.ts));
+        var trafSpeed = sumTraffic(acc.prevDot, dailyRatio);
         var limit = curDot.limit || Infinity;
         var trimmedTrafSpeed = Math.min(trafSpeed, limit);
-        var processedTrafSpeed = trafficProcess ? trafficProcess(curDot.ts, trimmedTrafSpeed) : trimmedTrafSpeed;
+        var processedTrafSpeed = trafficProcess ? trafficProcess({
+          timeStamp: curDot.ts,
+          trafSpeed: trimmedTrafSpeed,
+          dailyRatio: dailyRatio,
+          dot: acc.prevDot,
+          limit: limit
+        }) : trimmedTrafSpeed;
         intervalTraffic = processedTrafSpeed * dotPeriod;
       }
 
@@ -228,6 +239,7 @@ exports.default = function (moment) {
     cleanTraffic: cleanTraffic,
     getTimeStamps: getTimeStamps,
     calcGraphX: calcGraphX,
-    sumTraffic: sumTraffic
+    sumTraffic: sumTraffic,
+    sumTrafficWRetention: sumTrafficWRetention
   };
 };
