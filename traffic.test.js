@@ -5,6 +5,7 @@ const {
   cleanTraffic,
   calcGraphX,
   sumTraffic,
+  sumTrafficWRetention,
   getDataSum,
   getTrafficTodaySum,
   getTrafficYesterdaySum,
@@ -131,6 +132,25 @@ describe('sumTraffic', function() {
       dotGeneric,
       1.234
     )).toBe(1234 * 3 + 1 + 2 + 3)
+  })
+})
+
+describe('sumTrafficWRetention', function() {
+  test('should return 0', () => {
+    expect(sumTrafficWRetention(
+      null
+    )).toBe(0)
+  })
+  test('should return 1000', () => {
+    expect(sumTrafficWRetention(
+      dot1000
+    )).toBe(1000)
+  })
+  test('should return 3705', () => {
+    expect(sumTrafficWRetention(
+      dotGeneric,
+      1.234
+    )).toBe(1234 * 3 + 1 + 2)
   })
 })
 
