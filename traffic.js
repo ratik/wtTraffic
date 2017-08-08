@@ -24,6 +24,7 @@ export default (moment) => {
 
   const addMissingDots = (realDots, addTs = []) => {
     const sortedDots = realDots.sort((a, b) => a.ts - b.ts)
+    let sortedAddTs = addTs.sort((a, b) => a - b)
 
     const withFakeDot = [
       ...sortedDots,
@@ -31,14 +32,16 @@ export default (moment) => {
     ]
 
     const withNewDots = withFakeDot.reduce((acc, curDot, index, array) => {
-      const newDots = []
-      addTs.map(timeStamp => {
+      let newDots = []
+      sortedAddTs = sortedAddTs.filter(timeStamp => {
         if (curDot.ts > timeStamp && array[index-1]) {
           newDots.push({
             ...array[index-1],
             ts: timeStamp,
           })
+          return false
         }
+        return true
       })
       acc = [ ...acc, ...newDots ]
       if (curDot.ts !== Infinity) acc.push(curDot)

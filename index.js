@@ -40,17 +40,22 @@ exports.default = function (moment) {
     var sortedDots = realDots.sort(function (a, b) {
       return a.ts - b.ts;
     });
+    var sortedAddTs = addTs.sort(function (a, b) {
+      return a - b;
+    });
 
     var withFakeDot = [].concat(_toConsumableArray(sortedDots), [_extends({}, last(sortedDots), { ts: Infinity })]);
 
     var withNewDots = withFakeDot.reduce(function (acc, curDot, index, array) {
       var newDots = [];
-      addTs.map(function (timeStamp) {
+      sortedAddTs = sortedAddTs.filter(function (timeStamp) {
         if (curDot.ts > timeStamp && array[index - 1]) {
           newDots.push(_extends({}, array[index - 1], {
             ts: timeStamp
           }));
+          return false;
         }
+        return true;
       });
       acc = [].concat(_toConsumableArray(acc), newDots);
       if (curDot.ts !== Infinity) acc.push(curDot);
