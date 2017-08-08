@@ -33,12 +33,13 @@ exports.default = function (moment) {
       return acc;
     }, {});
   };
-  var addMissingDots = function addMissingDots(realDots, timeNow) {
+
+  var addMissingDots = function addMissingDots(realDots, timeStamp) {
     var sortedDots = realDots.sort(function (a, b) {
       return a.ts - b.ts;
     });
-    var realDotsWithNow = [].concat(_toConsumableArray(sortedDots), [_extends({}, last(sortedDots), { ts: timeNow })]);
-    return realDotsWithNow.reduce(function (realAndPhantomDots, curRealDot) {
+    var realDotsWithLast = [].concat(_toConsumableArray(sortedDots), [_extends({}, last(sortedDots), { ts: timeStamp })]);
+    return realDotsWithLast.reduce(function (realAndPhantomDots, curRealDot) {
       while (realAndPhantomDots.length && curRealDot.ts - last(realAndPhantomDots).ts > MIN_GRAPH_INTERVAL) {
         realAndPhantomDots = [].concat(_toConsumableArray(realAndPhantomDots), [_extends({}, last(realAndPhantomDots), {
           ts: last(realAndPhantomDots).ts + MIN_GRAPH_INTERVAL
@@ -124,7 +125,7 @@ exports.default = function (moment) {
     var _getTimeStamps3 = getTimeStamps(),
         timeNow = _getTimeStamps3.timeNow;
 
-    var sum = addMissingDots(dots, timeNow).reduce(function (acc, curDot) {
+    var sum = addMissingDots(dots, Math.max(timeEnd, timeNow)).reduce(function (acc, curDot) {
       var inTimeInterval = curDot.ts >= timeStart && curDot.ts <= timeEnd;
 
       var intervalTraffic = 0;
