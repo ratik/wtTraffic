@@ -22,13 +22,30 @@ export default (moment) => {
     }, {})
   }
 
-  const addMissingDots = (realDots, timeStamp) => {
+  const addMissingDots = (realDots, addTs = []) => {
     const sortedDots = realDots.sort((a, b) => a.ts - b.ts)
-    const realDotsWithLast = [
+
+    const withFakeDot = [
       ...sortedDots,
-      { ...last(sortedDots), ts: timeStamp },
+      { ...last(sortedDots), ts: Infinity },
     ]
-    return realDotsWithLast
+
+    const withNewDots = withFakeDot.reduce((acc, curDot, index, array) => {
+      const newDots = []
+      addTs.map(timeStamp => {
+        if (curDot.ts > timeStamp && array[index-1]) {
+          newDots.push({
+            ...array[index-1],
+            ts: timeStamp,
+          })
+        }
+      })
+      acc = [ ...acc, ...newDots ]
+      if (curDot.ts !== Infinity) acc.push(curDot)
+      return acc
+    }, [])
+
+    return withNewDots
       .reduce((realAndPhantomDots, curRealDot) => {
         while (realAndPhantomDots.length && curRealDot.ts - last(realAndPhantomDots).ts > MIN_GRAPH_INTERVAL) {
           realAndPhantomDots = [
@@ -79,7 +96,7 @@ export default (moment) => {
     const timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null
     const { timeStartDay, timeEndDay, timeNow } = getTimeStamps(timeStamp)
 
-    return addMissingDots(dots, timeNow)
+    return addMissingDots(dots, [ timeNow ])
       .map(curDot => {
         const ts = curDot.ts
         const limit = curDot.limit || Infinity
@@ -98,7 +115,7 @@ export default (moment) => {
     if (!dots || !dots.length) return 0
     const { timeNow } = getTimeStamps()
 
-    const sum = addMissingDots(dots, Math.max(timeEnd, timeNow))
+    const sum = addMissingDots(dots, [ timeEnd, timeNow ])
       .reduce((acc, curDot) => {
         const inTimeInterval = curDot.ts >= timeStart && curDot.ts <= timeEnd
 
