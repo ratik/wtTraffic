@@ -1,8 +1,8 @@
-import { calcTraffRatio } from 'wt-curvepoint';
+import { calcTraffRatio } from 'wt-curvepoint'
 
 const MIN_GRAPH_INTERVAL = 60 * 60
 const MIN_INTERVAL_BETWEEN_DOTS = 10
-const last = (arr) => arr[arr.length-1];
+const last = (arr) => arr[arr.length-1]
 
 export default (moment) => {
   const getTrafficChange = dots => {
@@ -21,13 +21,14 @@ export default (moment) => {
       return acc
     }, {})
   }
-  const addMissingDots = (realDots, timeNow) => {
+
+  const addMissingDots = (realDots, timeStamp) => {
     const sortedDots = realDots.sort((a, b) => a.ts - b.ts)
-    const realDotsWithNow = [
+    const realDotsWithLast = [
       ...sortedDots,
-      { ...last(sortedDots), ts: timeNow },
+      { ...last(sortedDots), ts: timeStamp },
     ]
-    return realDotsWithNow
+    return realDotsWithLast
       .reduce((realAndPhantomDots, curRealDot) => {
         while (realAndPhantomDots.length && curRealDot.ts - last(realAndPhantomDots).ts > MIN_GRAPH_INTERVAL) {
           realAndPhantomDots = [
@@ -97,7 +98,7 @@ export default (moment) => {
     if (!dots || !dots.length) return 0
     const { timeNow } = getTimeStamps()
 
-    const sum = addMissingDots(dots, timeNow)
+    const sum = addMissingDots(dots, Math.max(timeEnd, timeNow))
       .reduce((acc, curDot) => {
         const inTimeInterval = curDot.ts >= timeStart && curDot.ts <= timeEnd
 
@@ -198,6 +199,6 @@ export default (moment) => {
     getTimeStamps,
     calcGraphX,
     sumTraffic,
-    sumTrafficWRetention
-  };
+    sumTrafficWRetention,
+  }
 }
