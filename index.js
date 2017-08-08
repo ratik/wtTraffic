@@ -34,12 +34,30 @@ exports.default = function (moment) {
     }, {});
   };
 
-  var addMissingDots = function addMissingDots(realDots, timeStamp) {
+  var addMissingDots = function addMissingDots(realDots) {
+    var addTs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
     var sortedDots = realDots.sort(function (a, b) {
       return a.ts - b.ts;
     });
-    var realDotsWithLast = [].concat(_toConsumableArray(sortedDots), [_extends({}, last(sortedDots), { ts: timeStamp })]);
-    return realDotsWithLast.reduce(function (realAndPhantomDots, curRealDot) {
+
+    var withFakeDot = [].concat(_toConsumableArray(sortedDots), [_extends({}, last(sortedDots), { ts: Infinity })]);
+
+    var withNewDots = withFakeDot.reduce(function (acc, curDot, index, array) {
+      var newDots = [];
+      addTs.map(function (timeStamp) {
+        if (curDot.ts > timeStamp && array[index - 1]) {
+          newDots.push(_extends({}, array[index - 1], {
+            ts: timeStamp
+          }));
+        }
+      });
+      acc = [].concat(_toConsumableArray(acc), newDots);
+      if (curDot.ts !== Infinity) acc.push(curDot);
+      return acc;
+    }, []);
+
+    return withNewDots.reduce(function (realAndPhantomDots, curRealDot) {
       while (realAndPhantomDots.length && curRealDot.ts - last(realAndPhantomDots).ts > MIN_GRAPH_INTERVAL) {
         realAndPhantomDots = [].concat(_toConsumableArray(realAndPhantomDots), [_extends({}, last(realAndPhantomDots), {
           ts: last(realAndPhantomDots).ts + MIN_GRAPH_INTERVAL
@@ -102,7 +120,7 @@ exports.default = function (moment) {
         timeEndDay = _getTimeStamps2.timeEndDay,
         timeNow = _getTimeStamps2.timeNow;
 
-    return addMissingDots(dots, timeNow).map(function (curDot) {
+    return addMissingDots(dots, [timeNow]).map(function (curDot) {
       var ts = curDot.ts;
       var limit = curDot.limit || Infinity;
       if (ts <= timeNow && ts >= timeStartDay && ts <= timeEndDay) {
@@ -125,7 +143,7 @@ exports.default = function (moment) {
     var _getTimeStamps3 = getTimeStamps(),
         timeNow = _getTimeStamps3.timeNow;
 
-    var sum = addMissingDots(dots, Math.max(timeEnd, timeNow)).reduce(function (acc, curDot) {
+    var sum = addMissingDots(dots, [timeEnd, timeNow]).reduce(function (acc, curDot) {
       var inTimeInterval = curDot.ts >= timeStart && curDot.ts <= timeEnd;
 
       var intervalTraffic = 0;
