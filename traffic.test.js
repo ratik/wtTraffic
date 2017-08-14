@@ -184,12 +184,12 @@ describe('getDataSum', function() {
     expect(getDataSum(
       [ endYesterdayDot, dot1000 ],
       startDay,
-      endDate
+      now
     )).toBe(simplify(hours * 1000))
   })
   test('should return hours * 1000', () => {
     const now = moment().unix()
-    const hours = (now - startDay) / 60 / 60
+    const hours = (endDate - startDay) / 60 / 60
     expect(getDataSum(
       [ { 
         ...endYesterdayDot,
@@ -199,8 +199,31 @@ describe('getDataSum', function() {
         limit: 123,
       } ],
       startDay,
-      moment.unix(startDay).add(1, 'day')
+      endDate
     )).toBe(simplify(hours * 123))
+  })
+
+  // period test
+  test('should return 1000 / 60 / 60 * 10', () => {
+    expect(getDataSum(
+      [ endYesterdayDot, dot1000 ],
+      startDay,
+      startDay + 10
+    )).toBe(simplify(1000 / 60 / 60 * 10))
+  })
+  test('should return 1000 / 60 / 60 * 30', () => {
+    expect(getDataSum(
+      [ endYesterdayDot, dot1000 ],
+      startDay - 10,
+      startDay + 20
+    )).toBe(simplify(1000 / 60 / 60 * 30))
+  })
+  test('should return 2 * 1000 + 1000 / 60', () => {
+    expect(getDataSum(
+      [ endYesterdayDot, dot1000 ],
+      startDay,
+      startDay + 60 * 60 * 2 + 60
+    )).toBe(simplify(2 * 1000 + 1000 / 60))
   })
 })
 
