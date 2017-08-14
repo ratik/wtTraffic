@@ -136,6 +136,7 @@ export default (moment) => {
               dailyRatio, 
               dot: acc.prevDot, 
               limit,
+              dotPeriod,
             }) 
             : trimmedTrafSpeed
           intervalTraffic = processedTrafSpeed * dotPeriod

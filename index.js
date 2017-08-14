@@ -163,7 +163,8 @@ exports.default = function (moment) {
           trafSpeed: trimmedTrafSpeed,
           dailyRatio: dailyRatio,
           dot: acc.prevDot,
-          limit: limit
+          limit: limit,
+          dotPeriod: dotPeriod
         }) : trimmedTrafSpeed;
         intervalTraffic = processedTrafSpeed * dotPeriod;
       }
