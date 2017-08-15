@@ -2,6 +2,7 @@ import lib from './index';
 import moment from 'moment';
 const {
   simplify,
+  numberCompare,
   cleanTraffic,
   calcGraphX,
   sumTraffic,
@@ -13,6 +14,7 @@ const {
   getTrafficSpeed,
   getTrafficChange,
   getAllSitesTraffic,
+  getAllSitesTrafficChange,
 } = lib(moment);
 
 import { range } from 'ramda'
@@ -55,6 +57,21 @@ const endYesterdayDot = {
   ts: moment.unix(startDay).subtract(1, 'day').unix(),
   limit: 100000,
 }
+
+describe('numberCompare', function() {
+  test('should return -1', () => {
+    expect(numberCompare(20, 0)).toBe(1)
+  })
+  test('should return 1', () => {
+    expect(numberCompare(0, 20)).toBe(-1)
+  })
+  test('should return 0', () => {
+    expect(numberCompare(0, 0)).toBe(0)
+    expect(numberCompare(0, 1)).toBe(0)
+    expect(numberCompare(4, 0)).toBe(0)
+    expect(numberCompare(0, 20, 20)).toBe(0)
+  })
+})
 
 describe('cleanTraffic', function() {
   test('should return array of 2 dots', () => {
@@ -246,11 +263,7 @@ describe('getTrafficTodaySum', function() {
     )).toBe(100)
   })
   test('should return 0', () => {
-    expect(getTrafficTodaySum(
-      [ ]
-    )).toBe(0)
-  })
-  test('should return 0', () => {
+    expect(getTrafficTodaySum([ ])).toBe(0)
     expect(getTrafficTodaySum()).toBe(0)
   })
 })
@@ -273,11 +286,7 @@ describe('getTrafficYesterdaySum', function() {
     )).toBe(24)
   })
   test('should return 0', () => {
-    expect(getTrafficYesterdaySum(
-      [ ]
-    )).toBe(0)
-  })
-  test('should return 0', () => {
+    expect(getTrafficYesterdaySum([ ])).toBe(0)
     expect(getTrafficYesterdaySum()).toBe(0)
   })
 })
@@ -437,14 +446,8 @@ describe('getAllSitesTraffic', function() {
   test('should return array of object', () => {
     expect(getAllSitesTraffic(
       [
-        {
-          id: 1,
-          siteSpeed: [ endYesterdayDot, dot1000 ]
-        },
-        {
-          id: 2,
-          siteSpeed: [ endYesterdayDot, dot1000 ],
-        },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ] },
       ]
     )).toEqual(
       range(0, 25).map(index => ({
@@ -488,14 +491,8 @@ describe('getAllSitesTraffic', function() {
   test('should return array of object', () => {
     expect(getAllSitesTraffic(
       [
-        {
-          id: 1,
-          siteSpeed: [ endYesterdayDot, dot1000 ]
-        },
-        {
-          id: 2,
-          siteSpeed: [ endYesterdayDot, dot1000 ],
-        },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ] },
       ],
       'yesterday'
     )).toEqual(
@@ -519,10 +516,7 @@ describe('getAllSitesTraffic', function() {
   test('should return data with subtracted purchase traffic', () => {
     expect(getAllSitesTraffic(
       [
-        {
-          id: 1,
-          siteSpeed: [ endYesterdayDot, dot1000 ]
-        },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
         {
           id: 2,
           siteSpeed: [ endYesterdayDot, dot1000 ],
@@ -552,5 +546,59 @@ describe('getAllSitesTraffic', function() {
         isFeature: index > 1,
       }))
     )
+  })
+})
+
+describe('getAllSitesTrafficChange', function() {
+  test('should return object of 0', () => {
+    expect(getAllSitesTrafficChange(
+      [
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ] },
+      ]
+    )).toEqual({
+      generic: 0,
+      mail: 0,
+      purchase: 0,
+      retention: 0,
+      seo: 0,
+      smm: 0,
+      swap: 0,
+      total: 0
+    })
+  })
+  test('should return purchase and total-1', () => {
+    expect(getAllSitesTrafficChange(
+      [
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 2, siteSpeed: [ endYesterdayDot, { ...dot1000, market: 50 } ] },
+      ]
+    )).toEqual({
+      generic: 0,
+      mail: 0,
+      purchase: -1,
+      retention: 0,
+      seo: 0,
+      smm: 0,
+      swap: 0,
+      total: -1
+    })
+  })
+  test('should return purchase and total 1', () => {
+    expect(getAllSitesTrafficChange(
+      [
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 2, siteSpeed: [ { ...endYesterdayDot, market: 50 }, dot1000 ] },
+      ]
+    )).toEqual({
+      generic: 0,
+      mail: 0,
+      purchase: 1,
+      retention: 0,
+      seo: 0,
+      smm: 0,
+      swap: 0,
+      total: 1
+    })
   })
 })

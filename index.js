@@ -266,7 +266,7 @@ exports.default = function (moment) {
   var getAllSitesTraffic = function getAllSitesTraffic(sites) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
 
-    var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null;
+    var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : moment().unix();
 
     var _getTimeStamps7 = getTimeStamps(timeStamp),
         timeStartDay = _getTimeStamps7.timeStartDay,
@@ -274,31 +274,21 @@ exports.default = function (moment) {
         timeNow = _getTimeStamps7.timeNow;
 
     var dots = [];
-
-    // prepare data to prediction
-    var subtractTraffic = sites.reduce(function (sitesSubtract, curSite) {
-      var purchase = curSite.traffic ? curSite.traffic.reduce(function (trafArray, trafPacket) {
-        return [].concat(_toConsumableArray(trafArray), [{
-          endTs: trafPacket.endDate,
-          speed: Math.round(trafPacket.count / trafPacket.duration)
-        }]);
-      }, []) : [];
-      var swap = []; // TODO
-      var total = [].concat(_toConsumableArray(purchase), swap);
-
-      return _extends({}, sitesSubtract, _defineProperty({}, curSite.id, { purchase: purchase, swap: swap, total: total }));
-    }, {});
+    var subtractTraffic = getSubtractTraffic(sites);
 
     for (var dotTs = timeStartDay; dotTs <= timeEndDay; dotTs += MIN_GRAPH_INTERVAL) {
-      dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow, period));
-      if (timeNow > dotTs && timeNow < dotTs + MIN_GRAPH_INTERVAL) {
-        dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, timeNow, timeEndDay, timeNow, period));
+      dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow));
+      if (timeStamp > dotTs && timeStamp < dotTs + MIN_GRAPH_INTERVAL) {
+        dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, timeStamp, timeEndDay, timeNow));
       }
     }
     return dots;
   };
 
-  var getAllSitesTrafficDotInfo = function getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow, period) {
+  var getAllSitesTrafficDotInfo = function getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs) {
+    var timeEndDay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+    var timeNow = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+
     var isFeature = dotTs > timeNow;
     var x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs);
     var speed = sites.reduce(function (totalSpeed, curSite) {
@@ -308,7 +298,7 @@ exports.default = function (moment) {
         var sumSpeed = speed[key];
 
         // subtract speed of ended packages
-        if (isFeature && subtractTraffic[curSite.id][key]) {
+        if (isFeature && subtractTraffic[curSite.id] && subtractTraffic[curSite.id][key]) {
           var subtractSpeed = subtractTraffic[curSite.id][key].reduce(function (totalSubtract, current) {
             return totalSubtract += current.endTs < dotTs ? current.speed : 0;
           }, 0);
@@ -336,6 +326,37 @@ exports.default = function (moment) {
     };
   };
 
+  var getSubtractTraffic = function getSubtractTraffic(sites) {
+    return sites.reduce(function (sitesSubtract, curSite) {
+      var purchase = curSite.traffic ? curSite.traffic.reduce(function (trafArray, trafPacket) {
+        return [].concat(_toConsumableArray(trafArray), [{
+          endTs: trafPacket.endDate,
+          speed: Math.round(trafPacket.count / trafPacket.duration)
+        }]);
+      }, []) : [];
+      var swap = []; // TODO
+      var total = [].concat(_toConsumableArray(purchase), swap);
+
+      return _extends({}, sitesSubtract, _defineProperty({}, curSite.id, { purchase: purchase, swap: swap, total: total }));
+    }, {});
+  };
+
+  var getAllSitesTrafficChange = function getAllSitesTrafficChange(sites) {
+    var timeStamp = moment().subtract(1, 'day').unix();
+
+    var _getTimeStamps8 = getTimeStamps(),
+        timeStartDay = _getTimeStamps8.timeStartDay,
+        timeEndDay = _getTimeStamps8.timeEndDay,
+        timeNow = _getTimeStamps8.timeNow;
+
+    var nowSpeed = getAllSitesTrafficDotInfo(sites, [], timeNow).speed;
+    var yesterdaySpeed = getAllSitesTrafficDotInfo(sites, [], timeStamp).speed;
+
+    return Object.keys(nowSpeed).reduce(function (acc, trafficType) {
+      return _extends({}, acc, _defineProperty({}, trafficType, numberCompare(nowSpeed[trafficType], yesterdaySpeed[trafficType])));
+    }, {});
+  };
+
   return {
     getTrafficSpeed: getTrafficSpeed,
     getTrafficYesterdaySum: getTrafficYesterdaySum,
@@ -344,6 +365,7 @@ exports.default = function (moment) {
     getTrafficGraphData: getTrafficGraphData,
     getTrafficChange: getTrafficChange,
     getAllSitesTraffic: getAllSitesTraffic,
+    getAllSitesTrafficChange: getAllSitesTrafficChange,
     simplify: simplify,
     cleanTraffic: cleanTraffic,
     getTimeStamps: getTimeStamps,
