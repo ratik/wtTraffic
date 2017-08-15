@@ -11,15 +11,20 @@ export default (moment) => {
 
     return Object.keys(nowSpeed).reduce((acc, trafficType) => {
       if (typeof (nowSpeed[trafficType]) !== 'number' ) return acc
-      const delta = nowSpeed[trafficType] - yesterdaySpeed[trafficType]
-      const equallyDelta = Math.max(10, Math.max(nowSpeed[trafficType], yesterdaySpeed[trafficType]) * 0.05)
-
-      acc[trafficType] = -1
-      if (delta > 0) acc[trafficType] = 1
-      if (Math.abs(delta) <= equallyDelta) acc[trafficType] = 0
-
-      return acc
+      return {
+        ...acc,
+        [ trafficType ]: numberCompare(nowSpeed[trafficType], yesterdaySpeed[trafficType]),
+      }
     }, {})
+  }
+
+  const numberCompare = (main, secondary, equallyDiff = 5, equallyRatio = 0.05) => {
+    const delta = main - secondary
+    const equallyDelta = Math.max(equallyDiff, Math.max(main, secondary) * equallyRatio)
+
+    if (Math.abs(delta) <= equallyDelta) return 0
+    if (delta > 0) return 1
+    return -1
   }
 
   const addMissingDots = (realDots, addTs = []) => {
@@ -165,12 +170,14 @@ export default (moment) => {
     return getDataSum(dots, timeStartDay, timeEndDay)
   }
 
-  const getTrafficSpeed = (dots, period = 'today') => {
+  const getTrafficSpeed = (dots, period = 'today', timeStamp = null) => {
     const { timeNow } = getTimeStamps()
-    const time = period === 'yesterday' ? moment(timeNow * 1000).subtract(1, 'day').unix() : timeNow
+    let time = timeNow
+    if (period === 'yesterday') time = moment(timeNow * 1000).subtract(1, 'day').unix()
+    if (timeStamp) time = timeStamp
     const sortedDots = dots.sort((a, b) => a.ts - b.ts)
     const dot = sortedDots.reduce((acc, cur) => cur.ts <= time ? cur : acc, sortedDots[0])
-    const ratio = calcTraffRatio(calcGraphX(timeNow))
+    const ratio = calcTraffRatio(calcGraphX(time))
     const trafficLimit = dot ? dot.limit : Infinity
     const process = (type, ratio = 1) => dot ? Math.round(dot[type] * ratio) : 0
 
@@ -180,7 +187,7 @@ export default (moment) => {
     let swap = process('ref')
     let purchase  = process('market')
     let retention = process('retention')
-    let total = seo+smm+mail+purchase+swap+retention
+    let total = seo + smm + mail + purchase + swap + retention
     let isTrimmed = false
 
     if (total > 0 && total > trafficLimit) {
@@ -196,7 +203,7 @@ export default (moment) => {
     }
 
     return {
-      generic: seo+smm+mail,
+      generic: seo + smm + mail,
       total,
       seo,
       smm,
@@ -208,6 +215,79 @@ export default (moment) => {
     }
   }
 
+  const getAllSitesTraffic = (sites, period = 'today') => {
+    const timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null
+    const { timeStartDay, timeEndDay, timeNow } = getTimeStamps(timeStamp)
+    let dots = []
+
+    // prepare data to prediction
+    let subtractTraffic = sites.reduce((sitesSubtract, curSite) => {
+      const purchase = curSite.traffic ? curSite.traffic.reduce((trafArray, trafPacket) => [
+        ...trafArray,
+        {
+          endTs: trafPacket.endDate,
+          speed: Math.round(trafPacket.count / trafPacket.duration),
+        },
+      ], []) : []
+      const swap = [] // TODO
+      const total = [ ...purchase, ...swap ]
+
+      return {
+        ...sitesSubtract,
+        [ curSite.id ]: { purchase, swap, total },
+      }
+    }, {})
+
+    for (let dotTs = timeStartDay; dotTs <= timeEndDay; dotTs += MIN_GRAPH_INTERVAL) {
+      dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow, period))
+      if (timeNow > dotTs && timeNow < dotTs + MIN_GRAPH_INTERVAL) {
+        dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, timeNow, timeEndDay, timeNow, period))
+      }
+    }
+    return dots
+  }
+  
+  const getAllSitesTrafficDotInfo = (sites, subtractTraffic, dotTs, timeEndDay, timeNow, period) => {
+    const isFeature = dotTs > timeNow
+    const x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs)
+    const speed = sites.reduce((totalSpeed, curSite) => {
+      const speed = getTrafficSpeed(curSite.siteSpeed, null, dotTs)
+
+      return Object.keys(totalSpeed).reduce((object, key) => {
+        let sumSpeed = speed[key]
+
+        // subtract speed of ended packages
+        if (isFeature && subtractTraffic[ curSite.id][ key ]) {
+          const subtractSpeed = subtractTraffic[ curSite.id ][ key ].reduce((totalSubtract, current) => {
+            return totalSubtract += current.endTs < dotTs ? current.speed : 0
+          }, 0)
+          sumSpeed = Math.max(0, sumSpeed - subtractSpeed)
+        }
+
+        return {
+          ...object,
+          [ key ]: totalSpeed[ key ] + sumSpeed,
+        }
+      }, {})
+    }, {
+      generic: 0,
+      total: 0,
+      seo: 0,
+      smm: 0,
+      mail: 0,
+      purchase: 0,
+      swap: 0,
+      retention: 0,
+    })
+
+    return {
+      speed,
+      isFeature,
+      y: speed.total,
+      x,
+    }
+  }
+
   return {
     getTrafficSpeed,
     getTrafficYesterdaySum,
@@ -215,10 +295,12 @@ export default (moment) => {
     getDataSum,
     getTrafficGraphData,
     getTrafficChange,
+    getAllSitesTraffic,
     simplify,
     cleanTraffic,
     getTimeStamps,
     calcGraphX,
+    numberCompare,
     sumTraffic,
     sumTrafficWRetention,
   }

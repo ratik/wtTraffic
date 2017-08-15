@@ -12,6 +12,7 @@ const {
   getTrafficGraphData,
   getTrafficSpeed,
   getTrafficChange,
+  getAllSitesTraffic,
 } = lib(moment);
 
 import { range } from 'ramda'
@@ -429,5 +430,127 @@ describe('getTrafficChange', function() {
       swap: 0,
       retention: 0,
     })
+  })
+})
+
+describe('getAllSitesTraffic', function() {
+  test('should return array of object', () => {
+    expect(getAllSitesTraffic(
+      [
+        {
+          id: 1,
+          siteSpeed: [ endYesterdayDot, dot1000 ]
+        },
+        {
+          id: 2,
+          siteSpeed: [ endYesterdayDot, dot1000 ],
+        },
+      ]
+    )).toEqual(
+      range(0, 25).map(index => ({
+        x: simplify(index / 24),
+        y: 2000,
+        speed: {
+          generic: 0,
+          mail: 0,
+          purchase: 2000,
+          retention: 0,
+          seo: 0,
+          smm: 0,
+          swap: 0,
+          total: 2000,
+        },
+        isFeature: index > 1,
+      }))
+    )
+  })
+  test('should return array of object', () => {
+    expect(getAllSitesTraffic(
+      [ ]
+    )).toEqual(
+      range(0, 25).map(index => ({
+        x: simplify(index / 24),
+        y: 0,
+        speed: {
+          generic: 0,
+          mail: 0,
+          purchase: 0,
+          retention: 0,
+          seo: 0,
+          smm: 0,
+          swap: 0,
+          total: 0,
+        },
+        isFeature: index > 1,
+      }))
+    )
+  })
+  test('should return array of object', () => {
+    expect(getAllSitesTraffic(
+      [
+        {
+          id: 1,
+          siteSpeed: [ endYesterdayDot, dot1000 ]
+        },
+        {
+          id: 2,
+          siteSpeed: [ endYesterdayDot, dot1000 ],
+        },
+      ],
+      'yesterday'
+    )).toEqual(
+      range(0, 25).map(index => ({
+        x: simplify(index / 24),
+        y: 2000,
+        speed: {
+          generic: 0,
+          mail: 0,
+          purchase: 2000,
+          retention: 0,
+          seo: 0,
+          smm: 0,
+          swap: 0,
+          total: 2000,
+        },
+        isFeature: false,
+      }))
+    )
+  })
+  test('should return data with subtracted purchase traffic', () => {
+    expect(getAllSitesTraffic(
+      [
+        {
+          id: 1,
+          siteSpeed: [ endYesterdayDot, dot1000 ]
+        },
+        {
+          id: 2,
+          siteSpeed: [ endYesterdayDot, dot1000 ],
+          traffic: [
+            {
+              endDate: startDay + 60 * 60 * 2,
+              count: 100,
+              duration: 10,
+            }
+          ]
+        },
+      ]
+    )).toEqual(
+      range(0, 25).map(index => ({
+        x: simplify(index / 24),
+        y: index > 2 ? 1990 : 2000,
+        speed: {
+          generic: 0,
+          mail: 0,
+          purchase: index > 2 ? 1990 : 2000,
+          retention: 0,
+          seo: 0,
+          smm: 0,
+          swap: 0,
+          total: index > 2 ? 1990 : 2000,
+        },
+        isFeature: index > 1,
+      }))
+    )
   })
 })

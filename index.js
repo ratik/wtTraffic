@@ -10,6 +10,8 @@ var _wtCurvepoint = require('wt-curvepoint');
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var MIN_GRAPH_INTERVAL = 60 * 60;
 var MIN_INTERVAL_BETWEEN_DOTS = 10;
 var last = function last(arr) {
@@ -23,15 +25,20 @@ exports.default = function (moment) {
 
     return Object.keys(nowSpeed).reduce(function (acc, trafficType) {
       if (typeof nowSpeed[trafficType] !== 'number') return acc;
-      var delta = nowSpeed[trafficType] - yesterdaySpeed[trafficType];
-      var equallyDelta = Math.max(10, Math.max(nowSpeed[trafficType], yesterdaySpeed[trafficType]) * 0.05);
-
-      acc[trafficType] = -1;
-      if (delta > 0) acc[trafficType] = 1;
-      if (Math.abs(delta) <= equallyDelta) acc[trafficType] = 0;
-
-      return acc;
+      return _extends({}, acc, _defineProperty({}, trafficType, numberCompare(nowSpeed[trafficType], yesterdaySpeed[trafficType])));
     }, {});
+  };
+
+  var numberCompare = function numberCompare(main, secondary) {
+    var equallyDiff = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 5;
+    var equallyRatio = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.05;
+
+    var delta = main - secondary;
+    var equallyDelta = Math.max(equallyDiff, Math.max(main, secondary) * equallyRatio);
+
+    if (Math.abs(delta) <= equallyDelta) return 0;
+    if (delta > 0) return 1;
+    return -1;
   };
 
   var addMissingDots = function addMissingDots(realDots) {
@@ -201,18 +208,21 @@ exports.default = function (moment) {
 
   var getTrafficSpeed = function getTrafficSpeed(dots) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
+    var timeStamp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
     var _getTimeStamps6 = getTimeStamps(),
         timeNow = _getTimeStamps6.timeNow;
 
-    var time = period === 'yesterday' ? moment(timeNow * 1000).subtract(1, 'day').unix() : timeNow;
+    var time = timeNow;
+    if (period === 'yesterday') time = moment(timeNow * 1000).subtract(1, 'day').unix();
+    if (timeStamp) time = timeStamp;
     var sortedDots = dots.sort(function (a, b) {
       return a.ts - b.ts;
     });
     var dot = sortedDots.reduce(function (acc, cur) {
       return cur.ts <= time ? cur : acc;
     }, sortedDots[0]);
-    var ratio = (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(timeNow));
+    var ratio = (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(time));
     var trafficLimit = dot ? dot.limit : Infinity;
     var process = function process(type) {
       var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
@@ -253,6 +263,79 @@ exports.default = function (moment) {
     };
   };
 
+  var getAllSitesTraffic = function getAllSitesTraffic(sites) {
+    var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
+
+    var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null;
+
+    var _getTimeStamps7 = getTimeStamps(timeStamp),
+        timeStartDay = _getTimeStamps7.timeStartDay,
+        timeEndDay = _getTimeStamps7.timeEndDay,
+        timeNow = _getTimeStamps7.timeNow;
+
+    var dots = [];
+
+    // prepare data to prediction
+    var subtractTraffic = sites.reduce(function (sitesSubtract, curSite) {
+      var purchase = curSite.traffic ? curSite.traffic.reduce(function (trafArray, trafPacket) {
+        return [].concat(_toConsumableArray(trafArray), [{
+          endTs: trafPacket.endDate,
+          speed: Math.round(trafPacket.count / trafPacket.duration)
+        }]);
+      }, []) : [];
+      var swap = []; // TODO
+      var total = [].concat(_toConsumableArray(purchase), swap);
+
+      return _extends({}, sitesSubtract, _defineProperty({}, curSite.id, { purchase: purchase, swap: swap, total: total }));
+    }, {});
+
+    for (var dotTs = timeStartDay; dotTs <= timeEndDay; dotTs += MIN_GRAPH_INTERVAL) {
+      dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow, period));
+      if (timeNow > dotTs && timeNow < dotTs + MIN_GRAPH_INTERVAL) {
+        dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, timeNow, timeEndDay, timeNow, period));
+      }
+    }
+    return dots;
+  };
+
+  var getAllSitesTrafficDotInfo = function getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow, period) {
+    var isFeature = dotTs > timeNow;
+    var x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs);
+    var speed = sites.reduce(function (totalSpeed, curSite) {
+      var speed = getTrafficSpeed(curSite.siteSpeed, null, dotTs);
+
+      return Object.keys(totalSpeed).reduce(function (object, key) {
+        var sumSpeed = speed[key];
+
+        // subtract speed of ended packages
+        if (isFeature && subtractTraffic[curSite.id][key]) {
+          var subtractSpeed = subtractTraffic[curSite.id][key].reduce(function (totalSubtract, current) {
+            return totalSubtract += current.endTs < dotTs ? current.speed : 0;
+          }, 0);
+          sumSpeed = Math.max(0, sumSpeed - subtractSpeed);
+        }
+
+        return _extends({}, object, _defineProperty({}, key, totalSpeed[key] + sumSpeed));
+      }, {});
+    }, {
+      generic: 0,
+      total: 0,
+      seo: 0,
+      smm: 0,
+      mail: 0,
+      purchase: 0,
+      swap: 0,
+      retention: 0
+    });
+
+    return {
+      speed: speed,
+      isFeature: isFeature,
+      y: speed.total,
+      x: x
+    };
+  };
+
   return {
     getTrafficSpeed: getTrafficSpeed,
     getTrafficYesterdaySum: getTrafficYesterdaySum,
@@ -260,10 +343,12 @@ exports.default = function (moment) {
     getDataSum: getDataSum,
     getTrafficGraphData: getTrafficGraphData,
     getTrafficChange: getTrafficChange,
+    getAllSitesTraffic: getAllSitesTraffic,
     simplify: simplify,
     cleanTraffic: cleanTraffic,
     getTimeStamps: getTimeStamps,
     calcGraphX: calcGraphX,
+    numberCompare: numberCompare,
     sumTraffic: sumTraffic,
     sumTrafficWRetention: sumTrafficWRetention
   };
