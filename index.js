@@ -14,6 +14,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 var MIN_GRAPH_INTERVAL = 60 * 60;
 var MIN_INTERVAL_BETWEEN_DOTS = 10;
+var MAX_RATIO = 2;
 var last = function last(arr) {
   return arr[arr.length - 1];
 };
@@ -188,10 +189,38 @@ exports.default = function (moment) {
     return simplify(sum);
   };
 
+  var futureLimits = function futureLimits(dot, ts) {
+    if (sumTraffic(dot, MAX_RATIO) < dot.limit) {
+      return [];
+    }
+    var out = [];
+
+    var _getTimeStamps4 = getTimeStamps(dot.ts),
+        timeEndDay = _getTimeStamps4.timeEndDay;
+
+    var isTrimmed = dot.limit < sumTraffic(dot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(dot.ts)));
+    if (isTrimmed) {
+      out.push({ isTrimmed: isTrimmed, ts: dot.ts });
+    }
+    for (var time = dot.ts + 60; time < timeEndDay; time = time + 60) {
+      var trafficWithRatio = sumTraffic(dot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(time)));
+      if (trafficWithRatio > dot.limit) {
+        if (!isTrimmed) {
+          isTrimmed = true;
+          out.push({ isTrimmed: isTrimmed, ts: time });
+        }
+      } else if (isTrimmed) {
+        isTrimmed = false;
+        out.push({ isTrimmed: isTrimmed, ts: time });
+      }
+    }
+    return out;
+  };
+
   var getTrafficTodaySum = function getTrafficTodaySum(dots) {
-    var _getTimeStamps4 = getTimeStamps(),
-        timeStartDay = _getTimeStamps4.timeStartDay,
-        timeNow = _getTimeStamps4.timeNow;
+    var _getTimeStamps5 = getTimeStamps(),
+        timeStartDay = _getTimeStamps5.timeStartDay,
+        timeNow = _getTimeStamps5.timeNow;
 
     return getDataSum(dots, timeStartDay, timeNow);
   };
@@ -199,9 +228,9 @@ exports.default = function (moment) {
   var getTrafficYesterdaySum = function getTrafficYesterdaySum(dots) {
     var timeStamp = moment().subtract(1, 'day').unix();
 
-    var _getTimeStamps5 = getTimeStamps(timeStamp),
-        timeStartDay = _getTimeStamps5.timeStartDay,
-        timeEndDay = _getTimeStamps5.timeEndDay;
+    var _getTimeStamps6 = getTimeStamps(timeStamp),
+        timeStartDay = _getTimeStamps6.timeStartDay,
+        timeEndDay = _getTimeStamps6.timeEndDay;
 
     return getDataSum(dots, timeStartDay, timeEndDay);
   };
@@ -210,8 +239,8 @@ exports.default = function (moment) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
     var timeStamp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
-    var _getTimeStamps6 = getTimeStamps(),
-        timeNow = _getTimeStamps6.timeNow;
+    var _getTimeStamps7 = getTimeStamps(),
+        timeNow = _getTimeStamps7.timeNow;
 
     var time = timeNow;
     if (period === 'yesterday') time = moment(timeNow * 1000).subtract(1, 'day').unix();
@@ -268,10 +297,10 @@ exports.default = function (moment) {
 
     var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : moment().unix();
 
-    var _getTimeStamps7 = getTimeStamps(timeStamp),
-        timeStartDay = _getTimeStamps7.timeStartDay,
-        timeEndDay = _getTimeStamps7.timeEndDay,
-        timeNow = _getTimeStamps7.timeNow;
+    var _getTimeStamps8 = getTimeStamps(timeStamp),
+        timeStartDay = _getTimeStamps8.timeStartDay,
+        timeEndDay = _getTimeStamps8.timeEndDay,
+        timeNow = _getTimeStamps8.timeNow;
 
     var dots = [];
     var subtractTraffic = getSubtractTraffic(sites);
@@ -344,10 +373,10 @@ exports.default = function (moment) {
   var getAllSitesTrafficChange = function getAllSitesTrafficChange(sites) {
     var timeStamp = moment().subtract(1, 'day').unix();
 
-    var _getTimeStamps8 = getTimeStamps(),
-        timeStartDay = _getTimeStamps8.timeStartDay,
-        timeEndDay = _getTimeStamps8.timeEndDay,
-        timeNow = _getTimeStamps8.timeNow;
+    var _getTimeStamps9 = getTimeStamps(),
+        timeStartDay = _getTimeStamps9.timeStartDay,
+        timeEndDay = _getTimeStamps9.timeEndDay,
+        timeNow = _getTimeStamps9.timeNow;
 
     var nowSpeed = getAllSitesTrafficDotInfo(sites, [], timeNow).speed;
     var yesterdaySpeed = getAllSitesTrafficDotInfo(sites, [], timeStamp).speed;
@@ -372,6 +401,7 @@ exports.default = function (moment) {
     calcGraphX: calcGraphX,
     numberCompare: numberCompare,
     sumTraffic: sumTraffic,
-    sumTrafficWRetention: sumTrafficWRetention
+    sumTrafficWRetention: sumTrafficWRetention,
+    futureLimits: futureLimits
   };
 };

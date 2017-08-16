@@ -2,6 +2,7 @@ import { calcTraffRatio } from 'wt-curvepoint'
 
 const MIN_GRAPH_INTERVAL = 60 * 60
 const MIN_INTERVAL_BETWEEN_DOTS = 10
+const MAX_RATIO = 2
 const last = (arr) => arr[arr.length-1]
 
 export default (moment) => {
@@ -157,6 +158,31 @@ export default (moment) => {
       }).total
 
     return simplify(sum)
+  }
+
+  const futureLimits = (dot,ts) => {
+    if (sumTraffic(dot,MAX_RATIO) < dot.limit) {
+      return [];
+    }
+    let out = [];
+    const {timeEndDay} = getTimeStamps(dot.ts);
+    let isTrimmed = dot.limit < sumTraffic(dot,calcTraffRatio(calcGraphX(dot.ts)));
+    if (isTrimmed) {
+      out.push({isTrimmed, ts:dot.ts});
+    }
+    for(let time = dot.ts+60; time < timeEndDay; time=time+60) {
+      const trafficWithRatio = sumTraffic(dot,calcTraffRatio(calcGraphX(time)));
+      if (trafficWithRatio>dot.limit) {
+        if (!isTrimmed) {
+          isTrimmed = true;
+          out.push({isTrimmed,ts:time});
+        }
+      } else if (isTrimmed) {
+        isTrimmed = false;
+        out.push({isTrimmed,ts:time});
+      }
+    } 
+    return out;
   }
 
   const getTrafficTodaySum = dots => {
@@ -318,5 +344,6 @@ export default (moment) => {
     numberCompare,
     sumTraffic,
     sumTrafficWRetention,
+    futureLimits,
   }
 }
