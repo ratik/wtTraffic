@@ -77,49 +77,50 @@ describe('numberCompare', function() {
 describe('futureLimits', function(){
   test('should return empty array when low traffic', () => {
     expect(futureLimits({
-      limit:100,
+      limit: 100,
       seo: 10,
       smm: 10,
       mail: 10,
-      market:0,
-      ref:0,
-      retention:0,
-      ts:moment().unix()
-    })).toEqual([]);
-  });
+      market: 0,
+      ref: 0,
+      retention: 0,
+      ts: moment().unix()
+    })).toEqual([])
+  })
   test('should limit', () => {
     expect(futureLimits({
-      limit:30,
+      limit: 30,
       seo: 10,
       smm: 10,
       mail: 10,
-      market:0,
-      ref:0,
-      retention:0,
-      ts:moment().unix()
+      market: 0,
+      ref: 0,
+      retention: 0,
+      ts: moment().unix()
     })).toEqual(
-      [ { isTrimmed: true, ts: 366960 },
+      [
+        { isTrimmed: true, ts: 366960 },
         { isTrimmed: false, ts: 378180 },
         { isTrimmed: true, ts: 382500 },
-        { isTrimmed: false, ts: 416160 } ]
-    );
-  });
+        { isTrimmed: false, ts: 416160 },
+      ]
+    )
+  })
   test('should limit all', () => {
     expect(futureLimits({
-      limit:3,
+      limit: 3,
       seo: 10,
       smm: 10,
       mail: 10,
-      market:0,
-      ref:0,
-      retention:0,
-      ts:moment().unix()
+      market: 0,
+      ref: 0,
+      retention: 0,
+      ts: moment().unix()
     })).toEqual(
       [ { isTrimmed: true, ts: 352800 } ]
-    );
-  });
-
-});
+    )
+  })
+})
 
 describe('cleanTraffic', function() {
   test('should return array of 2 dots', () => {

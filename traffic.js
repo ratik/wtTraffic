@@ -160,29 +160,21 @@ export default (moment) => {
     return simplify(sum)
   }
 
-  const futureLimits = (dot,ts) => {
-    if (sumTraffic(dot,MAX_RATIO) < dot.limit) {
-      return [];
-    }
-    let out = [];
-    const {timeEndDay} = getTimeStamps(dot.ts);
-    let isTrimmed = dot.limit < sumTraffic(dot,calcTraffRatio(calcGraphX(dot.ts)));
-    if (isTrimmed) {
-      out.push({isTrimmed, ts:dot.ts});
-    }
-    for(let time = dot.ts+60; time < timeEndDay; time=time+60) {
-      const trafficWithRatio = sumTraffic(dot,calcTraffRatio(calcGraphX(time)));
-      if (trafficWithRatio>dot.limit) {
-        if (!isTrimmed) {
-          isTrimmed = true;
-          out.push({isTrimmed,ts:time});
-        }
-      } else if (isTrimmed) {
-        isTrimmed = false;
-        out.push({isTrimmed,ts:time});
+  const futureLimits = lastDot => {
+    if (sumTraffic(lastDot, MAX_RATIO) < lastDot.limit) return []
+    const { timeEndDay } = getTimeStamps(lastDot.ts)
+    let time = lastDot.ts
+    let isTrimmed = false
+    let outDots = []
+    do {
+      const trafWithRatio = sumTraffic(lastDot, calcTraffRatio(calcGraphX(time)))
+      if ((trafWithRatio > lastDot.limit) !== isTrimmed) {
+        isTrimmed = !isTrimmed
+        outDots.push({ isTrimmed, ts: time })
       }
-    } 
-    return out;
+      time += 60
+    } while (time < timeEndDay)
+    return outDots
   }
 
   const getTrafficTodaySum = dots => {
@@ -190,7 +182,7 @@ export default (moment) => {
     return getDataSum(dots, timeStartDay, timeNow)
   }
 
-  const getTrafficYesterdaySum = (dots) => {
+  const getTrafficYesterdaySum = dots => {
     const timeStamp = moment().subtract(1, 'day').unix()
     const { timeStartDay, timeEndDay } = getTimeStamps(timeStamp)
     return getDataSum(dots, timeStartDay, timeEndDay)

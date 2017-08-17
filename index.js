@@ -189,32 +189,24 @@ exports.default = function (moment) {
     return simplify(sum);
   };
 
-  var futureLimits = function futureLimits(dot, ts) {
-    if (sumTraffic(dot, MAX_RATIO) < dot.limit) {
-      return [];
-    }
-    var out = [];
+  var futureLimits = function futureLimits(lastDot) {
+    if (sumTraffic(lastDot, MAX_RATIO) < lastDot.limit) return [];
 
-    var _getTimeStamps4 = getTimeStamps(dot.ts),
+    var _getTimeStamps4 = getTimeStamps(lastDot.ts),
         timeEndDay = _getTimeStamps4.timeEndDay;
 
-    var isTrimmed = dot.limit < sumTraffic(dot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(dot.ts)));
-    if (isTrimmed) {
-      out.push({ isTrimmed: isTrimmed, ts: dot.ts });
-    }
-    for (var time = dot.ts + 60; time < timeEndDay; time = time + 60) {
-      var trafficWithRatio = sumTraffic(dot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(time)));
-      if (trafficWithRatio > dot.limit) {
-        if (!isTrimmed) {
-          isTrimmed = true;
-          out.push({ isTrimmed: isTrimmed, ts: time });
-        }
-      } else if (isTrimmed) {
-        isTrimmed = false;
-        out.push({ isTrimmed: isTrimmed, ts: time });
+    var time = lastDot.ts;
+    var isTrimmed = false;
+    var outDots = [];
+    do {
+      var trafWithRatio = sumTraffic(lastDot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(time)));
+      if (trafWithRatio > lastDot.limit !== isTrimmed) {
+        isTrimmed = !isTrimmed;
+        outDots.push({ isTrimmed: isTrimmed, ts: time });
       }
-    }
-    return out;
+      time += 60;
+    } while (time < timeEndDay);
+    return outDots;
   };
 
   var getTrafficTodaySum = function getTrafficTodaySum(dots) {
