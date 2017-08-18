@@ -99,10 +99,10 @@ describe('futureLimits', function(){
       ts: moment().unix()
     })).toEqual(
       [
-        { isTrimmed: true, ts: 366960 },
-        { isTrimmed: false, ts: 378180 },
+        { isTrimmed: true, ts: 366720 },
+        { isTrimmed: false, ts: 378540 },
         { isTrimmed: true, ts: 382500 },
-        { isTrimmed: false, ts: 416160 },
+        { isTrimmed: false, ts: 416100 },
       ]
     )
   })
@@ -171,10 +171,10 @@ describe('calcGraphX', function() {
       moment.unix(startDay).add(12, 'hours').unix()
     )).toBe(0.5)
   })
-  test('should return 0.99', () => {
+  test('should return 0.9896', () => {
     expect(calcGraphX(
       moment.unix(startDay).add(24, 'hours').subtract(15, 'minutes').unix()
-    )).toBe(0.99)
+    )).toBe(0.9896)
   })
   test('should return 1', () => {
     expect(calcGraphX(
@@ -352,7 +352,7 @@ describe('getTrafficGraphData', function() {
         isTrimmed: false,
       },
       {
-        x: 0.04,
+        x: simplify(1 / 24, 4),
         y: 3000 * 0.12 + 1 + 2 + 3,
         ts: startDay + 60 * 60,
         isTrimmed: false,
@@ -365,7 +365,7 @@ describe('getTrafficGraphData', function() {
       'yesterday'
     )).toEqual(
       range(0, 25).map(index => ({
-        x: simplify(index / 24),
+        x: simplify(index / 24, 4),
         y: 1000,
         ts: moment.unix(startDay).subtract(1, 'day').add(index, 'hour').unix(),
         isTrimmed: false,
@@ -500,7 +500,7 @@ describe('getAllSitesTraffic', function() {
       ]
     )).toEqual(
       range(0, 25).map(index => ({
-        x: simplify(index / 24),
+        x: simplify(index / 24, 4),
         y: 2000,
         speed: {
           generic: 0,
@@ -522,7 +522,7 @@ describe('getAllSitesTraffic', function() {
       [ ]
     )).toEqual(
       range(0, 25).map(index => ({
-        x: simplify(index / 24),
+        x: simplify(index / 24, 4),
         y: 0,
         speed: {
           generic: 0,
@@ -549,7 +549,7 @@ describe('getAllSitesTraffic', function() {
       'yesterday'
     )).toEqual(
       range(0, 25).map(index => ({
-        x: simplify(index / 24),
+        x: simplify(index / 24, 4),
         y: 2000,
         speed: {
           generic: 0,
@@ -584,7 +584,7 @@ describe('getAllSitesTraffic', function() {
       ]
     )).toEqual(
       range(0, 25).map(index => ({
-        x: simplify(index / 24),
+        x: simplify(index / 24, 4),
         y: index > 2 ? 1990 : 2000,
         speed: {
           generic: 0,

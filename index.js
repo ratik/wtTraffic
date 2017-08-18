@@ -110,7 +110,7 @@ exports.default = function (moment) {
         timeStartDay = _getTimeStamps.timeStartDay,
         timeEndDay = _getTimeStamps.timeEndDay;
 
-    return simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0));
+    return simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0), 4);
   };
 
   var sumTraffic = function sumTraffic(dot) {

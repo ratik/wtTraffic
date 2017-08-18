@@ -94,7 +94,7 @@ export default (moment) => {
 
   const calcGraphX = timeStamp => {
     const { timeStartDay, timeEndDay } = getTimeStamps(timeStamp)
-    return simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0))
+    return simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0), 4)
   }
 
   const sumTraffic = (dot, ratio = 1) => dot ? (dot.seo + dot.smm + dot.mail) * ratio + dot.market + dot.ref + dot.retention : 0
