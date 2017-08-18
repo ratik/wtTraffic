@@ -72,6 +72,11 @@ describe('numberCompare', function() {
     expect(numberCompare(4, 0)).toBe(0)
     expect(numberCompare(0, 20, 20)).toBe(0)
   })
+  test('should return throw', () => {
+    expect(() => numberCompare()).toThrow()
+    expect(() => numberCompare('1', '2')).toThrow()
+    expect(() => numberCompare(1, [])).toThrow()
+  })
 })
 
 describe('futureLimits', function(){
@@ -120,6 +125,11 @@ describe('futureLimits', function(){
       [ { isTrimmed: true, ts: 352800 } ]
     )
   })
+  test('should return throw', () => {
+    expect(() => futureLimits()).toThrow()
+    expect(() => futureLimits([])).toThrow()
+    expect(() => futureLimits(1)).toThrow()
+  })
 })
 
 describe('cleanTraffic', function() {
@@ -158,6 +168,11 @@ describe('cleanTraffic', function() {
       [ ]
     )).toEqual([ ])
   })
+  test('should return throw', () => {
+    expect(() => cleanTraffic()).toThrow()
+    expect(() => cleanTraffic({})).toThrow()
+    expect(() => cleanTraffic(1)).toThrow()
+  })
 })
 
 describe('calcGraphX', function() {
@@ -181,6 +196,11 @@ describe('calcGraphX', function() {
       moment.unix(startDay).add(24, 'hours').subtract(1, 'second').unix()
     )).toBe(1)
   })
+  test('should return throw', () => {
+    expect(() => calcGraphX()).toThrow()
+    expect(() => calcGraphX({})).toThrow()
+    expect(() => calcGraphX([])).toThrow()
+  })
 })
 
 describe('sumTraffic', function() {
@@ -200,6 +220,11 @@ describe('sumTraffic', function() {
       1.234
     )).toBe(1234 * 3 + 1 + 2 + 3)
   })
+  test('should return throw', () => {
+    expect(() => sumTraffic(1)).toThrow()
+    expect(() => sumTraffic([])).toThrow()
+    expect(() => sumTraffic({}, [])).toThrow()
+  })
 })
 
 describe('sumTrafficWRetention', function() {
@@ -218,6 +243,11 @@ describe('sumTrafficWRetention', function() {
       dotGeneric,
       1.234
     )).toBe(1234 * 3 + 1 + 2)
+  })
+  test('should return throw', () => {
+    expect(() => sumTrafficWRetention(1)).toThrow()
+    expect(() => sumTrafficWRetention([])).toThrow()
+    expect(() => sumTrafficWRetention({}, [])).toThrow()
   })
 })
 
@@ -292,6 +322,15 @@ describe('getDataSum', function() {
       startDay + 60 * 60 * 2 + 60
     )).toBe(simplify(2 * 1000 + 1000 / 60))
   })
+
+  // throw test
+  test('should return throw', () => {
+    expect(() => getDataSum()).toThrow()
+    expect(() => getDataSum(1)).toThrow()
+    expect(() => getDataSum({})).toThrow()
+    expect(() => getDataSum([], null, null)).toThrow()
+    expect(() => getDataSum([], 1, null)).toThrow()
+  })
 })
 
 describe('getTrafficTodaySum', function() {
@@ -313,7 +352,6 @@ describe('getTrafficTodaySum', function() {
   })
   test('should return 0', () => {
     expect(getTrafficTodaySum([ ])).toBe(0)
-    expect(getTrafficTodaySum()).toBe(0)
   })
 })
 
@@ -336,7 +374,6 @@ describe('getTrafficYesterdaySum', function() {
   })
   test('should return 0', () => {
     expect(getTrafficYesterdaySum([ ])).toBe(0)
-    expect(getTrafficYesterdaySum()).toBe(0)
   })
 })
 
@@ -371,6 +408,11 @@ describe('getTrafficGraphData', function() {
         isTrimmed: false,
       }))
     )
+  })
+  test('should return throw', () => {
+    expect(() => getTrafficGraphData()).toThrow()
+    expect(() => getTrafficGraphData(1)).toThrow()
+    expect(() => getTrafficGraphData({})).toThrow()
   })
 })
 
@@ -457,6 +499,11 @@ describe('getTrafficSpeed', function() {
       retention: 0,
       isTrimmed: false,
     })
+  })
+  test('should return throw', () => {
+    expect(() => getTrafficSpeed()).toThrow()
+    expect(() => getTrafficSpeed(1)).toThrow()
+    expect(() => getTrafficSpeed({})).toThrow()
   })
 })
 
@@ -601,6 +648,11 @@ describe('getAllSitesTraffic', function() {
       }))
     )
   })
+  test('should return throw', () => {
+    expect(() => getAllSitesTraffic()).toThrow()
+    expect(() => getAllSitesTraffic(1)).toThrow()
+    expect(() => getAllSitesTraffic({})).toThrow()
+  })
 })
 
 describe('getAllSitesTrafficChange', function() {
@@ -654,5 +706,10 @@ describe('getAllSitesTrafficChange', function() {
       swap: 0,
       total: 1
     })
+  })
+  test('should return throw', () => {
+    expect(() => getAllSitesTrafficChange()).toThrow()
+    expect(() => getAllSitesTrafficChange(1)).toThrow()
+    expect(() => getAllSitesTrafficChange({})).toThrow()
   })
 })
