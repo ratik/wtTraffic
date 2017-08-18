@@ -512,6 +512,7 @@ describe('getAllSitesTraffic', function() {
           swap: 0,
           total: 2000,
         },
+        ts: startDay + 60 * 60 * index,
         isFeature: index > 1,
       }))
     )
@@ -533,11 +534,13 @@ describe('getAllSitesTraffic', function() {
           swap: 0,
           total: 0,
         },
+        ts: startDay + 60 * 60 * index,
         isFeature: index > 1,
       }))
     )
   })
   test('should return array of object', () => {
+    const tsStart = moment.unix(startDay).subtract(1, 'day').unix()
     expect(getAllSitesTraffic(
       [
         { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
@@ -558,6 +561,7 @@ describe('getAllSitesTraffic', function() {
           swap: 0,
           total: 2000,
         },
+        ts: tsStart + 60 * 60 * index,
         isFeature: false,
       }))
     )
@@ -592,6 +596,7 @@ describe('getAllSitesTraffic', function() {
           swap: 0,
           total: index > 2 ? 1990 : 2000,
         },
+        ts: startDay + 60 * 60 * index,
         isFeature: index > 1,
       }))
     )

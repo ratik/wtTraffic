@@ -342,6 +342,7 @@ exports.default = function (moment) {
     return {
       speed: speed,
       isFeature: isFeature,
+      ts: dotTs,
       y: speed.total,
       x: x
     };

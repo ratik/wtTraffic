@@ -284,6 +284,7 @@ export default (moment) => {
     return {
       speed,
       isFeature,
+      ts: dotTs,
       y: speed.total,
       x,
     }
