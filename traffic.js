@@ -277,7 +277,7 @@ export default (moment) => {
 
   const getAllSitesTrafficDotInfo = (sites, subtractTraffic, dotTs, timeEndDay = null, timeNow = null) => {
     if (!Array.isArray(sites)) throw 'sites is not array'
-    const isFeature = dotTs > timeNow
+    const isFuture = dotTs > timeNow
     const x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs)
     const speed = sites.reduce((totalSpeed, curSite) => {
       const speed = getTrafficSpeed(curSite.siteSpeed, null, dotTs)
@@ -286,7 +286,7 @@ export default (moment) => {
         let sumSpeed = speed[key]
 
         // subtract speed of ended packages
-        if (isFeature && subtractTraffic[ curSite.id ] && subtractTraffic[ curSite.id ][ key ]) {
+        if (isFuture && subtractTraffic[ curSite.id ] && subtractTraffic[ curSite.id ][ key ]) {
           const subtractSpeed = subtractTraffic[ curSite.id ][ key ].reduce((totalSubtract, current) => {
             return totalSubtract += current.endTs < dotTs ? current.speed : 0
           }, 0)
@@ -311,7 +311,7 @@ export default (moment) => {
 
     return {
       speed,
-      isFeature,
+      isFuture,
       ts: dotTs,
       y: speed.total,
       x,

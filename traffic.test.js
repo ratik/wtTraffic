@@ -560,7 +560,7 @@ describe('getAllSitesTraffic', function() {
           total: 2000,
         },
         ts: startDay + 60 * 60 * index,
-        isFeature: index > 1,
+        isFuture: index > 1,
       }))
     )
   })
@@ -582,7 +582,7 @@ describe('getAllSitesTraffic', function() {
           total: 0,
         },
         ts: startDay + 60 * 60 * index,
-        isFeature: index > 1,
+        isFuture: index > 1,
       }))
     )
   })
@@ -609,7 +609,7 @@ describe('getAllSitesTraffic', function() {
           total: 2000,
         },
         ts: tsStart + 60 * 60 * index,
-        isFeature: false,
+        isFuture: false,
       }))
     )
   })
@@ -644,7 +644,7 @@ describe('getAllSitesTraffic', function() {
           total: index > 2 ? 1990 : 2000,
         },
         ts: startDay + 60 * 60 * index,
-        isFeature: index > 1,
+        isFuture: index > 1,
       }))
     )
   })

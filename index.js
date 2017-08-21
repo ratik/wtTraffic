@@ -339,7 +339,7 @@ exports.default = function (moment) {
     var timeNow = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
 
     if (!Array.isArray(sites)) throw 'sites is not array';
-    var isFeature = dotTs > timeNow;
+    var isFuture = dotTs > timeNow;
     var x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs);
     var speed = sites.reduce(function (totalSpeed, curSite) {
       var speed = getTrafficSpeed(curSite.siteSpeed, null, dotTs);
@@ -348,7 +348,7 @@ exports.default = function (moment) {
         var sumSpeed = speed[key];
 
         // subtract speed of ended packages
-        if (isFeature && subtractTraffic[curSite.id] && subtractTraffic[curSite.id][key]) {
+        if (isFuture && subtractTraffic[curSite.id] && subtractTraffic[curSite.id][key]) {
           var subtractSpeed = subtractTraffic[curSite.id][key].reduce(function (totalSubtract, current) {
             return totalSubtract += current.endTs < dotTs ? current.speed : 0;
           }, 0);
@@ -370,7 +370,7 @@ exports.default = function (moment) {
 
     return {
       speed: speed,
-      isFeature: isFeature,
+      isFuture: isFuture,
       ts: dotTs,
       y: speed.total,
       x: x
