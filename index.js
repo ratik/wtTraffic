@@ -29,6 +29,7 @@ exports.default = function (moment) {
 
     return Object.keys(nowSpeed).reduce(function (acc, trafficType) {
       if (typeof nowSpeed[trafficType] !== 'number') return acc;
+
       return _extends({}, acc, _defineProperty({}, trafficType, numberCompare(nowSpeed[trafficType], yesterdaySpeed[trafficType])));
     }, {});
   };
@@ -39,6 +40,7 @@ exports.default = function (moment) {
 
     if (typeof main !== 'number') throw 'first argument is not a number';
     if (typeof secondary !== 'number') throw 'second argument is not a number';
+
     var delta = main - secondary;
     var equallyDelta = Math.max(equallyDiff, Math.max(main, secondary) * equallyRatio);
 
@@ -52,15 +54,14 @@ exports.default = function (moment) {
 
     if (!Array.isArray(realDots)) throw 'realDots is not array';
     if (!Array.isArray(addTs)) throw 'addTs is not array';
+
     var sortedDots = realDots.sort(function (a, b) {
       return a.ts - b.ts;
     });
     var sortedAddTs = addTs.sort(function (a, b) {
       return a - b;
     });
-
     var withFakeDot = [].concat(_toConsumableArray(sortedDots), [_extends({}, last(sortedDots), { ts: Infinity })]);
-
     var withNewDots = withFakeDot.reduce(function (acc, curDot, index, array) {
       var newDots = [];
       sortedAddTs = sortedAddTs.filter(function (timeStamp) {
@@ -73,7 +74,9 @@ exports.default = function (moment) {
         return true;
       });
       acc = [].concat(_toConsumableArray(acc), newDots);
+
       if (curDot.ts !== Infinity) acc.push(curDot);
+
       return acc;
     }, []);
 
@@ -83,6 +86,7 @@ exports.default = function (moment) {
           ts: last(realAndPhantomDots).ts + MIN_GRAPH_INTERVAL
         })]);
       }
+
       return [].concat(_toConsumableArray(realAndPhantomDots), [curRealDot]);
     }, []);
   };
@@ -91,17 +95,21 @@ exports.default = function (moment) {
     var commaLength = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
 
     if (typeof value !== 'number') throw 'value is not a number';
+
     return parseFloat(value.toFixed(commaLength));
   };
 
   var cleanTraffic = function cleanTraffic(traffic) {
     if (!Array.isArray(traffic)) throw 'traffic is not array';
     if (!traffic.length) return [];
+
     var sortedTraffic = traffic.sort(function (a, b) {
       return a.ts - b.ts;
     });
+
     return sortedTraffic.reduceRight(function (acc, curDot) {
       if (!acc.length || acc[0].ts - curDot.ts > MIN_INTERVAL_BETWEEN_DOTS) return [curDot].concat(_toConsumableArray(acc));
+
       return acc;
     }, []);
   };
@@ -110,9 +118,11 @@ exports.default = function (moment) {
     var timeStamp = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
     if (timeStamp && typeof timeStamp !== 'number') throw 'timeStamp is not a number';
+
     var timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined).utc().subtract(1, 'hours').startOf('day').add(1, 'hours').unix();
     var timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix();
     var timeNow = moment().unix();
+
     return { timeStartDay: timeStartDay, timeEndDay: timeEndDay, timeNow: timeNow };
   };
 
@@ -131,13 +141,16 @@ exports.default = function (moment) {
 
     if (dot && !isObject(dot)) throw 'dot is not a object';
     if (ratio && typeof ratio !== 'number') throw 'ratio is not a number';
+
     return dot ? (dot.seo + dot.smm + dot.mail) * ratio + dot.market + dot.ref + dot.retention : 0;
   };
+
   var sumTrafficWRetention = function sumTrafficWRetention(dot) {
     var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
     if (dot && !isObject(dot)) throw 'dot is not a object';
     if (ratio && typeof ratio !== 'number') throw 'ratio is not a number';
+
     return dot ? sumTraffic(dot, ratio) - dot.retention : 0;
   };
 
@@ -146,6 +159,7 @@ exports.default = function (moment) {
 
     if (!Array.isArray(dots)) throw 'dots is not array';
     if (!dots.length) return [];
+
     var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null;
 
     var _getTimeStamps2 = getTimeStamps(timeStamp),
@@ -153,7 +167,9 @@ exports.default = function (moment) {
         timeEndDay = _getTimeStamps2.timeEndDay,
         timeNow = _getTimeStamps2.timeNow;
 
-    return addMissingDots(dots, [timeNow]).map(function (curDot) {
+    var allDots = addMissingDots(dots, [timeNow]);
+
+    return allDots.map(function (curDot) {
       var ts = curDot.ts;
       var limit = curDot.limit || Infinity;
       if (ts <= timeNow && ts >= timeStartDay && ts <= timeEndDay) {
@@ -180,10 +196,11 @@ exports.default = function (moment) {
     var _getTimeStamps3 = getTimeStamps(),
         timeNow = _getTimeStamps3.timeNow;
 
-    var sum = addMissingDots(dots, [timeEnd, timeNow]).reduce(function (acc, curDot) {
+    var allDots = addMissingDots(dots, [timeEnd, timeNow]);
+    var sum = allDots.reduce(function (acc, curDot) {
       var inTimeInterval = curDot.ts >= timeStart && curDot.ts <= timeEnd;
-
       var intervalTraffic = 0;
+
       if (acc.prevDot && inTimeInterval) {
         var dotPeriod = (curDot.ts - Math.max(acc.prevDot.ts, timeStart)) / 60 / 60;
         var dailyRatio = (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(curDot.ts));
@@ -223,14 +240,18 @@ exports.default = function (moment) {
     var time = lastDot.ts;
     var isTrimmed = false;
     var outDots = [];
+
     do {
       var trafWithRatio = sumTraffic(lastDot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(time)));
+
       if (trafWithRatio > lastDot.limit !== isTrimmed) {
         isTrimmed = !isTrimmed;
         outDots.push({ isTrimmed: isTrimmed, ts: time });
       }
+
       time += 60;
     } while (time < timeEndDay);
+
     return outDots;
   };
 
@@ -262,8 +283,10 @@ exports.default = function (moment) {
         timeNow = _getTimeStamps7.timeNow;
 
     var time = timeNow;
+
     if (period === 'yesterday') time = moment(timeNow * 1000).subtract(1, 'day').unix();
     if (timeStamp) time = timeStamp;
+
     var sortedDots = dots.sort(function (a, b) {
       return a.ts - b.ts;
     });
@@ -288,6 +311,7 @@ exports.default = function (moment) {
 
     if (total > 0 && total > trafficLimit) {
       var _ratio = trafficLimit / total;
+
       seo = Math.round(seo * _ratio);
       smm = Math.round(smm * _ratio);
       mail = Math.round(mail * _ratio);
@@ -315,6 +339,7 @@ exports.default = function (moment) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
 
     if (!Array.isArray(sites)) throw 'sites is not array';
+
     var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : moment().unix();
 
     var _getTimeStamps8 = getTimeStamps(timeStamp),
@@ -327,10 +352,12 @@ exports.default = function (moment) {
 
     for (var dotTs = timeStartDay; dotTs <= timeEndDay; dotTs += MIN_GRAPH_INTERVAL) {
       dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, dotTs, timeEndDay, timeNow));
+
       if (timeStamp > dotTs && timeStamp < dotTs + MIN_GRAPH_INTERVAL) {
         dots.push(getAllSitesTrafficDotInfo(sites, subtractTraffic, timeStamp, timeEndDay, timeNow));
       }
     }
+
     return dots;
   };
 
@@ -339,6 +366,7 @@ exports.default = function (moment) {
     var timeNow = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
 
     if (!Array.isArray(sites)) throw 'sites is not array';
+
     var isFuture = dotTs > timeNow;
     var x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs);
     var speed = sites.reduce(function (totalSpeed, curSite) {
@@ -379,6 +407,7 @@ exports.default = function (moment) {
 
   var getSubtractTraffic = function getSubtractTraffic(sites) {
     if (!Array.isArray(sites)) throw 'sites is not array';
+
     return sites.reduce(function (sitesSubtract, curSite) {
       var purchase = curSite.traffic ? curSite.traffic.reduce(function (trafArray, trafPacket) {
         return [].concat(_toConsumableArray(trafArray), [{
@@ -395,11 +424,11 @@ exports.default = function (moment) {
 
   var getAllSitesTrafficChange = function getAllSitesTrafficChange(sites) {
     if (!Array.isArray(sites)) throw 'sites is not array';
+
     var timeStamp = moment().subtract(1, 'day').unix();
 
     var _getTimeStamps9 = getTimeStamps(),
         timeStartDay = _getTimeStamps9.timeStartDay,
-        timeEndDay = _getTimeStamps9.timeEndDay,
         timeNow = _getTimeStamps9.timeNow;
 
     var nowSpeed = getAllSitesTrafficDotInfo(sites, [], timeNow).speed;

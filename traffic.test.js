@@ -1,5 +1,6 @@
-import lib from './index';
-import moment from 'moment';
+import lib from './index'
+import moment from 'moment'
+
 const {
   simplify,
   numberCompare,
@@ -16,7 +17,7 @@ const {
   getAllSitesTraffic,
   getAllSitesTrafficChange,
   futureLimits,
-} = lib(moment);
+} = lib(moment)
 
 import { range } from 'ramda'
 
@@ -27,8 +28,8 @@ const startDay = moment.unix(0)
   .add(1, 'hours')
   .add(5, 'days')
   .unix()
-
 const endDate = moment.unix(startDay).add(1, 'day').unix()
+
 moment.now = jest.fn(() => (startDay + 1 * 60 * 60) * 1000)
 
 const dot1000 = {
@@ -41,7 +42,6 @@ const dot1000 = {
   ts: startDay,
   limit: 100000,
 }
-
 const dotGeneric = {
   mail: 1000,
   market: 1,
@@ -52,7 +52,6 @@ const dotGeneric = {
   ts: startDay,
   limit: 100000,
 }
-
 const endYesterdayDot = {
   ...dot1000,
   ts: moment.unix(startDay).subtract(1, 'day').unix(),
