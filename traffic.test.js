@@ -541,8 +541,8 @@ describe('getAllSitesTraffic', function() {
   test('should return array of object', () => {
     expect(getAllSitesTraffic(
       [
-        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
-        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
+        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
       ]
     )).toEqual(
       range(0, 25).map(index => ({
@@ -589,8 +589,8 @@ describe('getAllSitesTraffic', function() {
     const tsStart = moment.unix(startDay).subtract(1, 'day').unix()
     expect(getAllSitesTraffic(
       [
-        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
-        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
+        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
       ],
       'yesterday'
     )).toEqual(
@@ -615,7 +615,7 @@ describe('getAllSitesTraffic', function() {
   test('should return data with subtracted purchase traffic', () => {
     expect(getAllSitesTraffic(
       [
-        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
         {
           id: 2,
           siteSpeed: [ endYesterdayDot, dot1000 ],
@@ -658,8 +658,8 @@ describe('getAllSitesTrafficChange', function() {
   test('should return object of 0', () => {
     expect(getAllSitesTrafficChange(
       [
-        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
-        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ] },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
+        { id: 2, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
       ]
     )).toEqual({
       generic: 0,
@@ -675,8 +675,8 @@ describe('getAllSitesTrafficChange', function() {
   test('should return purchase and total-1', () => {
     expect(getAllSitesTrafficChange(
       [
-        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
-        { id: 2, siteSpeed: [ endYesterdayDot, { ...dot1000, market: 50 } ] },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
+        { id: 2, siteSpeed: [ endYesterdayDot, { ...dot1000, market: 50 } ], traffic: [] },
       ]
     )).toEqual({
       generic: 0,
@@ -692,8 +692,8 @@ describe('getAllSitesTrafficChange', function() {
   test('should return purchase and total 1', () => {
     expect(getAllSitesTrafficChange(
       [
-        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ] },
-        { id: 2, siteSpeed: [ { ...endYesterdayDot, market: 50 }, dot1000 ] },
+        { id: 1, siteSpeed: [ endYesterdayDot, dot1000 ], traffic: [] },
+        { id: 2, siteSpeed: [ { ...endYesterdayDot, market: 50 }, dot1000 ], traffic: [] },
       ]
     )).toEqual({
       generic: 0,

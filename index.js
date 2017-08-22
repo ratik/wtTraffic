@@ -15,8 +15,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var MIN_GRAPH_INTERVAL = 60 * 60;
 var MIN_INTERVAL_BETWEEN_DOTS = 10;
 var MAX_RATIO = 2;
-var last = function last(arr) {
-  return arr[arr.length - 1];
+var last = function last(array) {
+  return array[array.length - 1];
 };
 var isObject = function isObject(a) {
   return !!a && a.constructor === Object;
@@ -24,6 +24,8 @@ var isObject = function isObject(a) {
 
 exports.default = function (moment) {
   var getTrafficChange = function getTrafficChange(dots) {
+    if (!Array.isArray(dots)) throw 'getTrafficChange. dots is not array';
+
     var nowSpeed = getTrafficSpeed(dots, 'today');
     var yesterdaySpeed = getTrafficSpeed(dots, 'yesterday');
 
@@ -38,8 +40,8 @@ exports.default = function (moment) {
     var equallyDiff = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 5;
     var equallyRatio = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.05;
 
-    if (typeof main !== 'number') throw 'first argument is not a number';
-    if (typeof secondary !== 'number') throw 'second argument is not a number';
+    if (typeof main !== 'number') throw 'numberCompare. first argument is not a number';
+    if (typeof secondary !== 'number') throw 'numberCompare. second argument is not a number';
 
     var delta = main - secondary;
     var equallyDelta = Math.max(equallyDiff, Math.max(main, secondary) * equallyRatio);
@@ -52,8 +54,8 @@ exports.default = function (moment) {
   var addMissingDots = function addMissingDots(realDots) {
     var addTs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 
-    if (!Array.isArray(realDots)) throw 'realDots is not array';
-    if (!Array.isArray(addTs)) throw 'addTs is not array';
+    if (!Array.isArray(realDots)) throw 'addMissingDots. realDots is not array';
+    if (!Array.isArray(addTs)) throw 'addMissingDots. addTs is not array';
 
     var sortedDots = realDots.sort(function (a, b) {
       return a.ts - b.ts;
@@ -94,13 +96,13 @@ exports.default = function (moment) {
   var simplify = function simplify(value) {
     var commaLength = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
 
-    if (typeof value !== 'number') throw 'value is not a number';
+    if (typeof value !== 'number') throw 'simplify. value is not a number';
 
     return parseFloat(value.toFixed(commaLength));
   };
 
   var cleanTraffic = function cleanTraffic(traffic) {
-    if (!Array.isArray(traffic)) throw 'traffic is not array';
+    if (!Array.isArray(traffic)) throw 'cleanTraffic. traffic is not array';
     if (!traffic.length) return [];
 
     var sortedTraffic = traffic.sort(function (a, b) {
@@ -117,7 +119,7 @@ exports.default = function (moment) {
   var getTimeStamps = function getTimeStamps() {
     var timeStamp = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
-    if (timeStamp && typeof timeStamp !== 'number') throw 'timeStamp is not a number';
+    if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number';
 
     var timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined).utc().subtract(1, 'hours').startOf('day').add(1, 'hours').unix();
     var timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix();
@@ -127,7 +129,7 @@ exports.default = function (moment) {
   };
 
   var calcGraphX = function calcGraphX(timeStamp) {
-    if (typeof timeStamp !== 'number') throw 'timeStamp is not a number';
+    if (typeof timeStamp !== 'number') throw 'calcGraphX. timeStamp is not a number';
 
     var _getTimeStamps = getTimeStamps(timeStamp),
         timeStartDay = _getTimeStamps.timeStartDay,
@@ -139,8 +141,8 @@ exports.default = function (moment) {
   var sumTraffic = function sumTraffic(dot) {
     var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
-    if (dot && !isObject(dot)) throw 'dot is not a object';
-    if (ratio && typeof ratio !== 'number') throw 'ratio is not a number';
+    if (dot && !isObject(dot)) throw 'sumTraffic. dot is not a object';
+    if (ratio && typeof ratio !== 'number') throw 'sumTraffic. ratio is not a number';
 
     return dot ? (dot.seo + dot.smm + dot.mail) * ratio + dot.market + dot.ref + dot.retention : 0;
   };
@@ -148,8 +150,8 @@ exports.default = function (moment) {
   var sumTrafficWRetention = function sumTrafficWRetention(dot) {
     var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
-    if (dot && !isObject(dot)) throw 'dot is not a object';
-    if (ratio && typeof ratio !== 'number') throw 'ratio is not a number';
+    if (dot && !isObject(dot)) throw 'sumTrafficWRetention. dot is not a object';
+    if (ratio && typeof ratio !== 'number') throw 'sumTrafficWRetention. ratio is not a number';
 
     return dot ? sumTraffic(dot, ratio) - dot.retention : 0;
   };
@@ -157,7 +159,7 @@ exports.default = function (moment) {
   var getTrafficGraphData = function getTrafficGraphData(dots) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
 
-    if (!Array.isArray(dots)) throw 'dots is not array';
+    if (!Array.isArray(dots)) throw 'getTrafficGraphData. dots is not array';
     if (!dots.length) return [];
 
     var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null;
@@ -187,10 +189,10 @@ exports.default = function (moment) {
   var getDataSum = function getDataSum(dots, timeStart, timeEnd) {
     var trafficProcess = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
-    if (!Array.isArray(dots)) throw 'dots is not array';
-    if (typeof timeStart !== 'number') throw 'timeStart is not a number';
-    if (typeof timeEnd !== 'number') throw 'timeEnd is not a number';
-    if (trafficProcess && typeof trafficProcess !== 'function') throw 'trafficProcess is not a function';
+    if (!Array.isArray(dots)) throw 'getDataSum. dots is not array';
+    if (typeof timeStart !== 'number') throw 'getDataSum. timeStart is not a number';
+    if (typeof timeEnd !== 'number') throw 'getDataSum. timeEnd is not a number';
+    if (trafficProcess && typeof trafficProcess !== 'function') throw 'getDataSum. trafficProcess is not a function';
     if (!dots.length) return 0;
 
     var _getTimeStamps3 = getTimeStamps(),
@@ -231,7 +233,7 @@ exports.default = function (moment) {
   };
 
   var futureLimits = function futureLimits(lastDot) {
-    if (!isObject(lastDot)) throw 'lastDot is not a object';
+    if (!isObject(lastDot)) throw 'futureLimits. lastDot is not a object';
     if (sumTraffic(lastDot, MAX_RATIO) < lastDot.limit) return [];
 
     var _getTimeStamps4 = getTimeStamps(lastDot.ts),
@@ -256,6 +258,8 @@ exports.default = function (moment) {
   };
 
   var getTrafficTodaySum = function getTrafficTodaySum(dots) {
+    if (!Array.isArray(dots)) throw 'getTrafficTodaySum. dots is not array';
+
     var _getTimeStamps5 = getTimeStamps(),
         timeStartDay = _getTimeStamps5.timeStartDay,
         timeNow = _getTimeStamps5.timeNow;
@@ -264,6 +268,8 @@ exports.default = function (moment) {
   };
 
   var getTrafficYesterdaySum = function getTrafficYesterdaySum(dots) {
+    if (!Array.isArray(dots)) throw 'getTrafficYesterdaySum. dots is not array';
+
     var timeStamp = moment().subtract(1, 'day').unix();
 
     var _getTimeStamps6 = getTimeStamps(timeStamp),
@@ -277,7 +283,7 @@ exports.default = function (moment) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
     var timeStamp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
-    if (!Array.isArray(dots)) throw 'dots is not array';
+    if (!Array.isArray(dots)) throw 'getTrafficSpeed. dots is not array';
 
     var _getTimeStamps7 = getTimeStamps(),
         timeNow = _getTimeStamps7.timeNow;
@@ -338,7 +344,7 @@ exports.default = function (moment) {
   var getAllSitesTraffic = function getAllSitesTraffic(sites) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
 
-    if (!Array.isArray(sites)) throw 'sites is not array';
+    if (!Array.isArray(sites)) throw 'getAllSitesTraffic. sites is not array';
 
     var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : moment().unix();
 
@@ -365,7 +371,7 @@ exports.default = function (moment) {
     var timeEndDay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
     var timeNow = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
 
-    if (!Array.isArray(sites)) throw 'sites is not array';
+    if (!Array.isArray(sites)) throw 'getAllSitesTrafficDotInfo. sites is not array';
 
     var isFuture = dotTs > timeNow;
     var x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs);
@@ -406,15 +412,17 @@ exports.default = function (moment) {
   };
 
   var getSubtractTraffic = function getSubtractTraffic(sites) {
-    if (!Array.isArray(sites)) throw 'sites is not array';
+    if (!Array.isArray(sites)) throw 'getSubtractTraffic. sites is not array';
 
     return sites.reduce(function (sitesSubtract, curSite) {
-      var purchase = curSite.traffic ? curSite.traffic.reduce(function (trafArray, trafPacket) {
+      if (!Array.isArray(curSite.traffic)) throw 'getSubtractTraffic. traffic is not array';
+
+      var purchase = curSite.traffic.reduce(function (trafArray, trafPacket) {
         return [].concat(_toConsumableArray(trafArray), [{
           endTs: trafPacket.endDate,
           speed: Math.round(trafPacket.count / trafPacket.duration)
         }]);
-      }, []) : [];
+      }, []);
       var swap = []; // TODO
       var total = [].concat(_toConsumableArray(purchase), swap);
 
@@ -423,7 +431,7 @@ exports.default = function (moment) {
   };
 
   var getAllSitesTrafficChange = function getAllSitesTrafficChange(sites) {
-    if (!Array.isArray(sites)) throw 'sites is not array';
+    if (!Array.isArray(sites)) throw 'getAllSitesTrafficChange. sites is not array';
 
     var timeStamp = moment().subtract(1, 'day').unix();
 

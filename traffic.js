@@ -3,16 +3,18 @@ import { calcTraffRatio } from 'wt-curvepoint'
 const MIN_GRAPH_INTERVAL = 60 * 60
 const MIN_INTERVAL_BETWEEN_DOTS = 10
 const MAX_RATIO = 2
-const last = (arr) => arr[arr.length-1]
+const last = array => array[ array.length - 1 ]
 const isObject = a => !!a && a.constructor === Object
 
 export default (moment) => {
   const getTrafficChange = dots => {
+    if (!Array.isArray(dots)) throw 'getTrafficChange. dots is not array'
+  
     const nowSpeed = getTrafficSpeed(dots, 'today')
     const yesterdaySpeed = getTrafficSpeed(dots, 'yesterday')
 
     return Object.keys(nowSpeed).reduce((acc, trafficType) => {
-      if (typeof (nowSpeed[trafficType]) !== 'number' ) return acc
+      if (typeof nowSpeed[trafficType] !== 'number' ) return acc
 
       return {
         ...acc,
@@ -22,8 +24,8 @@ export default (moment) => {
   }
 
   const numberCompare = (main, secondary, equallyDiff = 5, equallyRatio = 0.05) => {
-    if (typeof (main) !== 'number') throw 'first argument is not a number'
-    if (typeof (secondary) !== 'number') throw 'second argument is not a number'
+    if (typeof main !== 'number') throw 'numberCompare. first argument is not a number'
+    if (typeof secondary !== 'number') throw 'numberCompare. second argument is not a number'
 
     const delta = main - secondary
     const equallyDelta = Math.max(equallyDiff, Math.max(main, secondary) * equallyRatio)
@@ -34,8 +36,8 @@ export default (moment) => {
   }
 
   const addMissingDots = (realDots, addTs = []) => {
-    if (!Array.isArray(realDots)) throw 'realDots is not array'
-    if (!Array.isArray(addTs)) throw 'addTs is not array'
+    if (!Array.isArray(realDots)) throw 'addMissingDots. realDots is not array'
+    if (!Array.isArray(addTs)) throw 'addMissingDots. addTs is not array'
 
     const sortedDots = realDots.sort((a, b) => a.ts - b.ts)
     let sortedAddTs = addTs.sort((a, b) => a - b)
@@ -78,13 +80,13 @@ export default (moment) => {
   }
 
   const simplify = (value, commaLength = 2) => {
-    if (typeof (value) !== 'number') throw 'value is not a number'
+    if (typeof value !== 'number') throw 'simplify. value is not a number'
 
     return parseFloat(value.toFixed(commaLength))
   }
 
   const cleanTraffic = traffic => {
-    if (!Array.isArray(traffic)) throw 'traffic is not array'
+    if (!Array.isArray(traffic)) throw 'cleanTraffic. traffic is not array'
     if (!traffic.length) return []
 
     const sortedTraffic = traffic.sort((a, b) => a.ts - b.ts)
@@ -97,7 +99,7 @@ export default (moment) => {
   }
 
   const getTimeStamps = (timeStamp = null) => {
-    if (timeStamp && typeof (timeStamp) !== 'number') throw 'timeStamp is not a number'
+    if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number'
 
     const timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined)
       .utc()
@@ -112,7 +114,7 @@ export default (moment) => {
   }
 
   const calcGraphX = timeStamp => {
-    if (typeof (timeStamp) !== 'number') throw 'timeStamp is not a number'
+    if (typeof timeStamp !== 'number') throw 'calcGraphX. timeStamp is not a number'
 
     const { timeStartDay, timeEndDay } = getTimeStamps(timeStamp)
 
@@ -120,21 +122,21 @@ export default (moment) => {
   }
 
   const sumTraffic = (dot, ratio = 1) => {
-    if (dot && !isObject(dot)) throw 'dot is not a object'
-    if (ratio && typeof (ratio) !== 'number') throw 'ratio is not a number'
+    if (dot && !isObject(dot)) throw 'sumTraffic. dot is not a object'
+    if (ratio && typeof ratio !== 'number') throw 'sumTraffic. ratio is not a number'
 
     return dot ? (dot.seo + dot.smm + dot.mail) * ratio + dot.market + dot.ref + dot.retention : 0
   }
 
   const sumTrafficWRetention = (dot, ratio = 1) => {
-    if (dot && !isObject(dot)) throw 'dot is not a object'
-    if (ratio && typeof (ratio) !== 'number') throw 'ratio is not a number'
+    if (dot && !isObject(dot)) throw 'sumTrafficWRetention. dot is not a object'
+    if (ratio && typeof ratio !== 'number') throw 'sumTrafficWRetention. ratio is not a number'
 
     return dot ? sumTraffic(dot, ratio) - dot.retention : 0
   }
 
   const getTrafficGraphData = (dots, period = 'today') => {
-    if (!Array.isArray(dots)) throw 'dots is not array'
+    if (!Array.isArray(dots)) throw 'getTrafficGraphData. dots is not array'
     if (!dots.length) return []
 
     const timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null
@@ -155,10 +157,10 @@ export default (moment) => {
   }
 
   const getDataSum = (dots, timeStart, timeEnd, trafficProcess = null) => {
-    if (!Array.isArray(dots)) throw 'dots is not array'
-    if (typeof (timeStart) !== 'number') throw 'timeStart is not a number'
-    if (typeof (timeEnd) !== 'number') throw 'timeEnd is not a number'
-    if (trafficProcess && typeof (trafficProcess) !== 'function') throw 'trafficProcess is not a function'
+    if (!Array.isArray(dots)) throw 'getDataSum. dots is not array'
+    if (typeof timeStart !== 'number') throw 'getDataSum. timeStart is not a number'
+    if (typeof timeEnd !== 'number') throw 'getDataSum. timeEnd is not a number'
+    if (trafficProcess && typeof trafficProcess !== 'function') throw 'getDataSum. trafficProcess is not a function'
     if (!dots.length) return 0
 
     const { timeNow } = getTimeStamps()
@@ -199,7 +201,7 @@ export default (moment) => {
   }
 
   const futureLimits = lastDot => {
-    if (!isObject(lastDot)) throw 'lastDot is not a object'
+    if (!isObject(lastDot)) throw 'futureLimits. lastDot is not a object'
     if (sumTraffic(lastDot, MAX_RATIO) < lastDot.limit) return []
 
     const { timeEndDay } = getTimeStamps(lastDot.ts)
@@ -222,12 +224,16 @@ export default (moment) => {
   }
 
   const getTrafficTodaySum = dots => {
+    if (!Array.isArray(dots)) throw 'getTrafficTodaySum. dots is not array'
+
     const { timeStartDay, timeNow } = getTimeStamps()
 
     return getDataSum(dots, timeStartDay, timeNow)
   }
 
   const getTrafficYesterdaySum = dots => {
+    if (!Array.isArray(dots)) throw 'getTrafficYesterdaySum. dots is not array'
+
     const timeStamp = moment().subtract(1, 'day').unix()
     const { timeStartDay, timeEndDay } = getTimeStamps(timeStamp)
 
@@ -235,7 +241,7 @@ export default (moment) => {
   }
 
   const getTrafficSpeed = (dots, period = 'today', timeStamp = null) => {
-    if (!Array.isArray(dots)) throw 'dots is not array'
+    if (!Array.isArray(dots)) throw 'getTrafficSpeed. dots is not array'
 
     const { timeNow } = getTimeStamps()
     let time = timeNow
@@ -285,7 +291,7 @@ export default (moment) => {
   }
 
   const getAllSitesTraffic = (sites, period = 'today') => {
-    if (!Array.isArray(sites)) throw 'sites is not array'
+    if (!Array.isArray(sites)) throw 'getAllSitesTraffic. sites is not array'
 
     const timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : moment().unix()
     const { timeStartDay, timeEndDay, timeNow } = getTimeStamps(timeStamp)
@@ -304,7 +310,7 @@ export default (moment) => {
   }
 
   const getAllSitesTrafficDotInfo = (sites, subtractTraffic, dotTs, timeEndDay = null, timeNow = null) => {
-    if (!Array.isArray(sites)) throw 'sites is not array'
+    if (!Array.isArray(sites)) throw 'getAllSitesTrafficDotInfo. sites is not array'
 
     const isFuture = dotTs > timeNow
     const x = dotTs === timeEndDay ? 1 : calcGraphX(dotTs)
@@ -348,16 +354,18 @@ export default (moment) => {
   }
   
   const getSubtractTraffic = sites => {
-    if (!Array.isArray(sites)) throw 'sites is not array'
+    if (!Array.isArray(sites)) throw 'getSubtractTraffic. sites is not array'
 
     return sites.reduce((sitesSubtract, curSite) => {
-      const purchase = curSite.traffic ? curSite.traffic.reduce((trafArray, trafPacket) => [
+      if (!Array.isArray(curSite.traffic)) throw 'getSubtractTraffic. traffic is not array'
+
+      const purchase = curSite.traffic.reduce((trafArray, trafPacket) => [
         ...trafArray,
         {
           endTs: trafPacket.endDate,
           speed: Math.round(trafPacket.count / trafPacket.duration),
         },
-      ], []) : []
+      ], [])
       const swap = [] // TODO
       const total = [ ...purchase, ...swap ]
 
@@ -369,7 +377,7 @@ export default (moment) => {
   }
 
   const getAllSitesTrafficChange = sites => {
-    if (!Array.isArray(sites)) throw 'sites is not array'
+    if (!Array.isArray(sites)) throw 'getAllSitesTrafficChange. sites is not array'
 
     const timeStamp = moment().subtract(1, 'day').unix()
     const { timeStartDay, timeNow } = getTimeStamps()
