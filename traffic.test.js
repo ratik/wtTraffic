@@ -372,6 +372,9 @@ describe('getTrafficYesterdaySum', function() {
     )).toBe(24)
   })
   test('should return 0', () => {
+    expect(getTrafficYesterdaySum(
+      [ { ...dot1000, ts: moment().unix() - 10 } ]
+    )).toBe(0)
     expect(getTrafficYesterdaySum([ ])).toBe(0)
   })
 })

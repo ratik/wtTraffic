@@ -205,19 +205,22 @@ exports.default = function (moment) {
 
       if (acc.prevDot && inTimeInterval) {
         var dotPeriod = (curDot.ts - Math.max(acc.prevDot.ts, timeStart)) / 60 / 60;
-        var dailyRatio = (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(curDot.ts));
-        var trafSpeed = sumTraffic(acc.prevDot, dailyRatio);
-        var limit = curDot.limit || Infinity;
-        var trimmedTrafSpeed = Math.min(trafSpeed, limit);
-        var processedTrafSpeed = trafficProcess ? trafficProcess({
-          timeStamp: curDot.ts,
-          trafSpeed: trimmedTrafSpeed,
-          dailyRatio: dailyRatio,
-          dot: acc.prevDot,
-          limit: limit,
-          dotPeriod: dotPeriod
-        }) : trimmedTrafSpeed;
-        intervalTraffic = processedTrafSpeed * dotPeriod;
+
+        if (dotPeriod > 0) {
+          var dailyRatio = (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(curDot.ts));
+          var trafSpeed = sumTraffic(acc.prevDot, dailyRatio);
+          var limit = curDot.limit || Infinity;
+          var trimmedTrafSpeed = Math.min(trafSpeed, limit);
+          var processedTrafSpeed = trafficProcess ? trafficProcess({
+            timeStamp: curDot.ts,
+            trafSpeed: trimmedTrafSpeed,
+            dailyRatio: dailyRatio,
+            dot: acc.prevDot,
+            limit: limit,
+            dotPeriod: dotPeriod
+          }) : trimmedTrafSpeed;
+          intervalTraffic = processedTrafSpeed * dotPeriod;
+        }
       }
 
       return {
