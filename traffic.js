@@ -48,11 +48,25 @@ export default (moment) => {
     const withNewDots = withFakeDot.reduce((acc, curDot, index, array) => {
       let newDots = []
       sortedAddTs = sortedAddTs.filter(timeStamp => {
-        if (curDot.ts > timeStamp && array[index-1]) {
-          newDots.push({
-            ...array[index-1],
-            ts: timeStamp,
-          })
+        if (curDot.ts === timeStamp) return false
+        if (curDot.ts > timeStamp) {
+          if (index <= 0) {
+            newDots.push({
+              limit: 0,
+              market: 0,
+              money: 0,
+              ref: 0,
+              retention: 0,
+              seo: 0,
+              smm: 0,
+              ts: timeStamp,
+            })
+          } else {
+            newDots.push({
+              ...array[index-1],
+              ts: timeStamp,
+            })
+          }
           return false
         }
         return true
