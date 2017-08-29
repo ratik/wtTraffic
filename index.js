@@ -15,6 +15,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var MIN_GRAPH_INTERVAL = 60 * 60;
 var MIN_INTERVAL_BETWEEN_DOTS = 10;
 var MAX_RATIO = 2;
+var DEFAULT_DOT = {
+  limit: 0,
+  market: 0,
+  money: 0,
+  ref: 0,
+  retention: 0,
+  seo: 0,
+  smm: 0,
+  data: {},
+  ts: null
+};
 var last = function last(array) {
   return array[array.length - 1];
 };
@@ -70,16 +81,9 @@ exports.default = function (moment) {
         if (curDot.ts === timeStamp) return false;
         if (curDot.ts > timeStamp) {
           if (index <= 0) {
-            newDots.push({
-              limit: 0,
-              market: 0,
-              money: 0,
-              ref: 0,
-              retention: 0,
-              seo: 0,
-              smm: 0,
+            newDots.push(_extends({}, DEFAULT_DOT, {
               ts: timeStamp
-            });
+            }));
           } else {
             newDots.push(_extends({}, array[index - 1], {
               ts: timeStamp
@@ -183,7 +187,7 @@ exports.default = function (moment) {
         timeEndDay = _getTimeStamps2.timeEndDay,
         timeNow = _getTimeStamps2.timeNow;
 
-    var allDots = addMissingDots(dots, [timeNow]);
+    var allDots = addMissingDots(dots, [timeStartDay, timeEndDay, timeNow]);
 
     return allDots.map(function (curDot) {
       var ts = curDot.ts;

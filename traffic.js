@@ -3,6 +3,17 @@ import { calcTraffRatio } from 'wt-curvepoint'
 const MIN_GRAPH_INTERVAL = 60 * 60
 const MIN_INTERVAL_BETWEEN_DOTS = 10
 const MAX_RATIO = 2
+const DEFAULT_DOT = {
+  limit: 0,
+  market: 0,
+  money: 0,
+  ref: 0,
+  retention: 0,
+  seo: 0,
+  smm: 0,
+  data: {},
+  ts: null,
+}
 const last = array => array[ array.length - 1 ]
 const isObject = a => !!a && a.constructor === Object
 
@@ -52,13 +63,7 @@ export default (moment) => {
         if (curDot.ts > timeStamp) {
           if (index <= 0) {
             newDots.push({
-              limit: 0,
-              market: 0,
-              money: 0,
-              ref: 0,
-              retention: 0,
-              seo: 0,
-              smm: 0,
+              ...DEFAULT_DOT,
               ts: timeStamp,
             })
           } else {
@@ -155,7 +160,7 @@ export default (moment) => {
 
     const timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null
     const { timeStartDay, timeEndDay, timeNow } = getTimeStamps(timeStamp)
-    const allDots = addMissingDots(dots, [ timeNow ])
+    const allDots = addMissingDots(dots, [ timeStartDay, timeEndDay, timeNow ])
 
     return allDots.map(curDot => {
       const ts = curDot.ts
