@@ -6,7 +6,7 @@ const MAX_RATIO = 2
 const DEFAULT_DOT = {
   limit: 0,
   market: 0,
-  money: 0,
+  mail: 0,
   ref: 0,
   retention: 0,
   seo: 0,
@@ -117,28 +117,39 @@ export default (moment) => {
     }, [])
   }
 
-  const getTimeStamps = (timeStamp = null) => {
-    if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number'
+  const getTimeStamps = (() => {
+    let cache = {}
 
-    const timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined)
-      .utc()
-      .subtract(1, 'hours')
-      .startOf('day')
-      .add(1, 'hours')
-      .unix()
-    const timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix()
-    const timeNow = moment().unix()
+    return (timeStamp = null) => {
+      if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number'
+      if (cache[ timeStamp ]) return cache[ timeStamp ]
 
-    return { timeStartDay, timeEndDay, timeNow }
-  }
+      const timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined)
+        .utc()
+        .subtract(1, 'hours')
+        .startOf('day')
+        .add(1, 'hours')
+        .unix()
+      const timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix()
+      const timeNow = moment().unix()
+      cache[ timeStamp ] = { timeStartDay, timeEndDay, timeNow }
 
-  const calcGraphX = timeStamp => {
-    if (typeof timeStamp !== 'number') throw 'calcGraphX. timeStamp is not a number'
+      return cache[ timeStamp ]
+    }
+  })()
 
-    const { timeStartDay, timeEndDay } = getTimeStamps(timeStamp)
+  const calcGraphX = (() => {
+    let cache = {}
 
-    return simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0), 4)
-  }
+    return timeStamp => {
+      if (typeof timeStamp !== 'number') throw 'calcGraphX. timeStamp is not a number'
+  
+      const { timeStartDay, timeEndDay } = getTimeStamps(timeStamp)
+      cache[ timeStamp ] = simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0), 4)
+  
+      return cache[ timeStamp ]
+    }
+  })()
 
   const sumTraffic = (dot, ratio = 1) => {
     if (dot && !isObject(dot)) throw 'sumTraffic. dot is not a object'
@@ -165,6 +176,7 @@ export default (moment) => {
     return allDots.map(curDot => {
       const ts = curDot.ts
       const limit = curDot.limit || Infinity
+
       if (ts <= timeNow && ts >= timeStartDay && ts <= timeEndDay) {
         const x = ts !== timeEndDay ? calcGraphX(ts) : 1
         const traffic = sumTraffic(curDot, calcTraffRatio(x))
@@ -230,6 +242,7 @@ export default (moment) => {
     let time = lastDot.ts
     let isTrimmed = false
     let outDots = []
+    let calcSpeed = 1 // minutes per iteration
 
     do {
       const trafWithRatio = sumTraffic(lastDot, calcTraffRatio(calcGraphX(time)))
@@ -239,7 +252,9 @@ export default (moment) => {
         outDots.push({ isTrimmed, ts: time })
       }
 
-      time += 60
+      // speed depends of delta
+      calcSpeed = Math.floor(30 * Math.abs(trafWithRatio - lastDot.limit) / lastDot.limit) || 1
+      time += 60 * calcSpeed
     } while (time < timeEndDay)
 
     return outDots

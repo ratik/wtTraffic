@@ -18,7 +18,7 @@ var MAX_RATIO = 2;
 var DEFAULT_DOT = {
   limit: 0,
   market: 0,
-  money: 0,
+  mail: 0,
   ref: 0,
   retention: 0,
   seo: 0,
@@ -134,27 +134,39 @@ exports.default = function (moment) {
     }, []);
   };
 
-  var getTimeStamps = function getTimeStamps() {
-    var timeStamp = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var getTimeStamps = function () {
+    var cache = {};
 
-    if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number';
+    return function () {
+      var timeStamp = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
-    var timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined).utc().subtract(1, 'hours').startOf('day').add(1, 'hours').unix();
-    var timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix();
-    var timeNow = moment().unix();
+      if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number';
+      if (cache[timeStamp]) return cache[timeStamp];
 
-    return { timeStartDay: timeStartDay, timeEndDay: timeEndDay, timeNow: timeNow };
-  };
+      var timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined).utc().subtract(1, 'hours').startOf('day').add(1, 'hours').unix();
+      var timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix();
+      var timeNow = moment().unix();
+      cache[timeStamp] = { timeStartDay: timeStartDay, timeEndDay: timeEndDay, timeNow: timeNow };
 
-  var calcGraphX = function calcGraphX(timeStamp) {
-    if (typeof timeStamp !== 'number') throw 'calcGraphX. timeStamp is not a number';
+      return cache[timeStamp];
+    };
+  }();
 
-    var _getTimeStamps = getTimeStamps(timeStamp),
-        timeStartDay = _getTimeStamps.timeStartDay,
-        timeEndDay = _getTimeStamps.timeEndDay;
+  var calcGraphX = function () {
+    var cache = {};
 
-    return simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0), 4);
-  };
+    return function (timeStamp) {
+      if (typeof timeStamp !== 'number') throw 'calcGraphX. timeStamp is not a number';
+
+      var _getTimeStamps = getTimeStamps(timeStamp),
+          timeStartDay = _getTimeStamps.timeStartDay,
+          timeEndDay = _getTimeStamps.timeEndDay;
+
+      cache[timeStamp] = simplify(Math.max(Math.min((timeStamp - timeStartDay) / (timeEndDay - timeStartDay), 1), 0), 4);
+
+      return cache[timeStamp];
+    };
+  }();
 
   var sumTraffic = function sumTraffic(dot) {
     var ratio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
@@ -192,6 +204,7 @@ exports.default = function (moment) {
     return allDots.map(function (curDot) {
       var ts = curDot.ts;
       var limit = curDot.limit || Infinity;
+
       if (ts <= timeNow && ts >= timeStartDay && ts <= timeEndDay) {
         var x = ts !== timeEndDay ? calcGraphX(ts) : 1;
         var traffic = sumTraffic(curDot, (0, _wtCurvepoint.calcTraffRatio)(x));
@@ -263,6 +276,7 @@ exports.default = function (moment) {
     var time = lastDot.ts;
     var isTrimmed = false;
     var outDots = [];
+    var calcSpeed = 1; // minutes per iteration
 
     do {
       var trafWithRatio = sumTraffic(lastDot, (0, _wtCurvepoint.calcTraffRatio)(calcGraphX(time)));
@@ -272,7 +286,9 @@ exports.default = function (moment) {
         outDots.push({ isTrimmed: isTrimmed, ts: time });
       }
 
-      time += 60;
+      // speed depends of delta
+      calcSpeed = Math.floor(30 * Math.abs(trafWithRatio - lastDot.limit) / lastDot.limit) || 1;
+      time += 60 * calcSpeed;
     } while (time < timeEndDay);
 
     return outDots;
