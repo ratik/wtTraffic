@@ -122,7 +122,7 @@ export default (moment) => {
 
     return (timeStamp = null) => {
       if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number'
-      if (cache[ timeStamp ]) return cache[ timeStamp ]
+      if (timeStamp && cache[ timeStamp ]) return cache[ timeStamp ]
 
       const timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined)
         .utc()
@@ -132,9 +132,11 @@ export default (moment) => {
         .unix()
       const timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix()
       const timeNow = moment().unix()
-      cache[ timeStamp ] = { timeStartDay, timeEndDay, timeNow }
+      const result = { timeStartDay, timeEndDay, timeNow }
 
-      return cache[ timeStamp ]
+      if (timeStamp) cache[ timeStamp ] = result
+
+      return result
     }
   })()
 

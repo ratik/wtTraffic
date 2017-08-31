@@ -141,14 +141,16 @@ exports.default = function (moment) {
       var timeStamp = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       if (timeStamp && typeof timeStamp !== 'number') throw 'getTimeStamps. timeStamp is not a number';
-      if (cache[timeStamp]) return cache[timeStamp];
+      if (timeStamp && cache[timeStamp]) return cache[timeStamp];
 
       var timeStartDay = moment(timeStamp ? timeStamp * 1000 : undefined).utc().subtract(1, 'hours').startOf('day').add(1, 'hours').unix();
       var timeEndDay = moment(timeStartDay * 1000).add(1, 'day').unix();
       var timeNow = moment().unix();
-      cache[timeStamp] = { timeStartDay: timeStartDay, timeEndDay: timeEndDay, timeNow: timeNow };
+      var result = { timeStartDay: timeStartDay, timeEndDay: timeEndDay, timeNow: timeNow };
 
-      return cache[timeStamp];
+      if (timeStamp) cache[timeStamp] = result;
+
+      return result;
     };
   }();
 
