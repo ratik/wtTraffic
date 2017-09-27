@@ -167,24 +167,51 @@ export default (moment) => {
     return dot ? sumTraffic(dot, ratio) - dot.retention : 0
   }
 
-  const getTrafficGraphData = (dots, period = 'today') => {
+  const getTrafficGraphData = (dots, period = 'today', traffic = null) => {
     if (!Array.isArray(dots)) throw 'getTrafficGraphData. dots is not array'
+    if (traffic && !Array.isArray(traffic)) throw 'getTrafficGraphData. traffic is not array'
     if (!dots.length) return []
 
     const timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null
     const { timeStartDay, timeEndDay, timeNow } = getTimeStamps(timeStamp)
-    const allDots = addMissingDots(dots, [ timeStartDay, timeEndDay, timeNow ])
+    let advDots = [ timeStartDay, timeEndDay, timeNow ]
+    let filteredTraffic = []
+
+    if (period === 'today' && traffic) {
+      filteredTraffic = traffic.reduce((trafArray, trafPacket) => {
+        if (trafPacket.endDate > timeNow && trafPacket.endDate < timeEndDay) {
+          trafArray.push({
+            ts: trafPacket.endDate,
+            subtract: Math.round(trafPacket.count / trafPacket.duration)
+          })
+          advDots.push(trafPacket.endDate)
+        }
+        return trafArray
+      }, [])
+    }
+
+    const allDots = addMissingDots(dots, advDots)
 
     return allDots.map(curDot => {
       const ts = curDot.ts
       const limit = curDot.limit || Infinity
+      const isFuture = ts > timeNow
 
-      if (ts <= timeNow && ts >= timeStartDay && ts <= timeEndDay) {
+      if (ts >= timeStartDay && ts <= timeEndDay) {
+        let subtract = 0
+
+        if (isFuture) {
+          filteredTraffic.map(packet => {
+            if (packet.ts <= ts) subtract = packet.subtract
+          })
+        }
+
         const x = ts !== timeEndDay ? calcGraphX(ts) : 1
-        const traffic = sumTraffic(curDot, calcTraffRatio(x))
+        const traffic = Math.max(0, sumTraffic(curDot, calcTraffRatio(x)) - subtract)
         const y = simplify(Math.min(traffic, limit), 3)
         const isTrimmed = traffic > limit
-        return { x, y, ts, isTrimmed }
+
+        return { x, y, ts, isTrimmed, isFuture }
       }
     }).filter(v => v)
   }

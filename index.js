@@ -190,8 +190,10 @@ exports.default = function (moment) {
 
   var getTrafficGraphData = function getTrafficGraphData(dots) {
     var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'today';
+    var traffic = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
     if (!Array.isArray(dots)) throw 'getTrafficGraphData. dots is not array';
+    if (traffic && !Array.isArray(traffic)) throw 'getTrafficGraphData. traffic is not array';
     if (!dots.length) return [];
 
     var timeStamp = period === 'yesterday' ? moment().subtract(1, 'day').unix() : null;
@@ -201,18 +203,44 @@ exports.default = function (moment) {
         timeEndDay = _getTimeStamps2.timeEndDay,
         timeNow = _getTimeStamps2.timeNow;
 
-    var allDots = addMissingDots(dots, [timeStartDay, timeEndDay, timeNow]);
+    var advDots = [timeStartDay, timeEndDay, timeNow];
+    var filteredTraffic = [];
+
+    if (period === 'today' && traffic) {
+      filteredTraffic = traffic.reduce(function (trafArray, trafPacket) {
+        if (trafPacket.endDate > timeNow && trafPacket.endDate < timeEndDay) {
+          trafArray.push({
+            ts: trafPacket.endDate,
+            subtract: Math.round(trafPacket.count / trafPacket.duration)
+          });
+          advDots.push(trafPacket.endDate);
+        }
+        return trafArray;
+      }, []);
+    }
+
+    var allDots = addMissingDots(dots, advDots);
 
     return allDots.map(function (curDot) {
       var ts = curDot.ts;
       var limit = curDot.limit || Infinity;
+      var isFuture = ts > timeNow;
 
-      if (ts <= timeNow && ts >= timeStartDay && ts <= timeEndDay) {
+      if (ts >= timeStartDay && ts <= timeEndDay) {
+        var subtract = 0;
+
+        if (isFuture) {
+          filteredTraffic.map(function (packet) {
+            if (packet.ts <= ts) subtract = packet.subtract;
+          });
+        }
+
         var x = ts !== timeEndDay ? calcGraphX(ts) : 1;
-        var traffic = sumTraffic(curDot, (0, _wtCurvepoint.calcTraffRatio)(x));
-        var y = simplify(Math.min(traffic, limit), 3);
-        var isTrimmed = traffic > limit;
-        return { x: x, y: y, ts: ts, isTrimmed: isTrimmed };
+        var _traffic = Math.max(0, sumTraffic(curDot, (0, _wtCurvepoint.calcTraffRatio)(x)) - subtract);
+        var y = simplify(Math.min(_traffic, limit), 3);
+        var isTrimmed = _traffic > limit;
+
+        return { x: x, y: y, ts: ts, isTrimmed: isTrimmed, isFuture: isFuture };
       }
     }).filter(function (v) {
       return v;

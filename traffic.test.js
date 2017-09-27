@@ -1,5 +1,6 @@
 import lib from './index'
 import moment from 'moment'
+import { calcTraffRatio } from 'wt-curvepoint'
 
 const {
   simplify,
@@ -383,20 +384,15 @@ describe('getTrafficGraphData', function() {
   test('should return array of 2 dots', () => {
     expect(getTrafficGraphData(
       [ dotGeneric ]
-    )).toEqual([
-      {
-        x: 0,
-        y: 3000 * 0.1 + 1 + 2 + 3,
-        ts: startDay,
+    )).toEqual(
+      range(0, 25).map(index => ({
+        isFuture: index >= 2,
+        x: simplify(index / 24, 4),
+        y: Math.round(3000 * calcTraffRatio(index / 24) + 1 + 2 + 3),
+        ts: moment.unix(startDay).add(index, 'hour').unix(),
         isTrimmed: false,
-      },
-      {
-        x: simplify(1 / 24, 4),
-        y: 3000 * 0.12 + 1 + 2 + 3,
-        ts: startDay + 60 * 60,
-        isTrimmed: false,
-      },
-    ])
+      }))
+    )
   })
   test('should return array of 25 dots', () => {
     expect(getTrafficGraphData(
@@ -404,6 +400,7 @@ describe('getTrafficGraphData', function() {
       'yesterday'
     )).toEqual(
       range(0, 25).map(index => ({
+        isFuture: false,
         x: simplify(index / 24, 4),
         y: 1000,
         ts: moment.unix(startDay).subtract(1, 'day').add(index, 'hour').unix(),
