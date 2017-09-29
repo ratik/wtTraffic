@@ -231,7 +231,7 @@ exports.default = function (moment) {
 
         if (isFuture) {
           filteredTraffic.map(function (packet) {
-            if (packet.ts <= ts) subtract = packet.subtract;
+            if (packet.ts <= ts) subtract += packet.subtract;
           });
         }
 

@@ -202,7 +202,7 @@ export default (moment) => {
 
         if (isFuture) {
           filteredTraffic.map(packet => {
-            if (packet.ts <= ts) subtract = packet.subtract
+            if (packet.ts <= ts) subtract += packet.subtract
           })
         }
 
